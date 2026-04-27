@@ -48,7 +48,7 @@
     <div class="info-text">
       ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
       Layout: 3 cm altura × 6 cm largura (canhoto 3 cm + parte principal 3 cm).<br>
-      Apenas logomarca e numeração grande.
+      Apenas 2 ingressos por linha. Logomarca e numeração grande.
     </div>
   </div>
 
@@ -73,11 +73,11 @@
       // Dimensões do ticket
       const ticketHeight = 30;      // 3 cm
       const ticketWidth = 60;       // 6 cm
-      const lado = 30;              // metade (3 cm)
+      const lado = 30;              // metade (3 cm) para canhoto e parte principal
 
-      const colunas = 3;
+      const colunas = 2;            // apenas 2 ingressos por linha
       const linhas = 9;             // 9 × 3 cm = 27 cm
-      const espacoColunas = 2;      // mm entre colunas
+      const espacoColunas = 5;      // mm entre as duas colunas
       const totalLargura = colunas * ticketWidth + (colunas - 1) * espacoColunas;
       const marginLeft = (210 - totalLargura) / 2;
       const marginTop = (297 - linhas * ticketHeight) / 2;
@@ -115,7 +115,7 @@
               doc.setLineWidth(0.1);
               doc.rect(x, y, lado, ticketHeight);
 
-              // Logo visual (apenas imagem ou selo "A")
+              // Logomarca visual (selo ou imagem)
               const logoSize = 8; // mm
               desenharLogo(doc, logoImg, x + (lado - logoSize) / 2, y + 2, logoSize);
 
@@ -127,7 +127,7 @@
               doc.text(numStr, x + lado / 2, y + logoSize + 13, { align: 'center' });
 
               // ---- LINHA DE CORTE VERTICAL (tracejada) ----
-              const dashX = x + lado; // exatamente no meio
+              const dashX = x + lado; // exatamente no meio (após 3 cm)
               doc.setDrawColor(0);
               doc.setLineWidth(0.2);
               doc.setLineDash([1.5, 1.5], 0);
@@ -139,12 +139,12 @@
               doc.text('✂', dashX - 2, y + 4, { align: 'center' });
 
               // ---- PARTE PRINCIPAL (direita, 3 cm) ----
-              const px = x + lado + 0.5; // folga da linha de corte
+              const px = x + lado + 0.5; // pequena folga para a linha de corte
               doc.setDrawColor(204);
               doc.setLineWidth(0.1);
               doc.rect(px, y, lado - 0.5, ticketHeight);
 
-              // Mesma logo
+              // Mesma logomarca
               desenharLogo(doc, logoImg, px + (lado - 0.5 - logoSize) / 2, y + 2, logoSize);
 
               // Número grande (com "Nº")
@@ -173,7 +173,7 @@
     }
 
     /**
-     * Desenha a logomarca (apenas visual, sem texto):
+     * Desenha a logomarca (apenas visual):
      * - Se existir 'logo.png', usa a imagem.
      * - Caso contrário, desenha um selo azul com a letra "A".
      */
