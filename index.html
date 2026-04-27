@@ -48,7 +48,7 @@
     <div class="info-text">
       ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
       Layout: 3 cm altura × 10 cm largura (canhoto 5 cm + parte principal 5 cm).<br>
-      Fonte grande, uniforme e <strong>marca d'água antifraude</strong>.
+      Fonte grande, uniforme e <strong>marca d'água antifraude reforçada no canhoto</strong>.
     </div>
   </div>
 
@@ -100,8 +100,8 @@
               const numStr = String(current).padStart(4, '0');
 
               // ---- CANHOTO (esquerda, 5 cm) ----
-              // Marca d'água primeiro (fundo)
-              adicionarMarcaDagua(doc, watermarkText, x, y, lado, ticketHeight);
+              // Marca d'água MAIS VISÍVEL no canhoto (opacidade 0.25, cor mais escura)
+              adicionarMarcaDagua(doc, watermarkText, x, y, lado, ticketHeight, 0.25, [140,140,140]);
 
               // Borda
               doc.setDrawColor(204);
@@ -132,8 +132,8 @@
 
               // ---- PARTE PRINCIPAL (direita, 5 cm) ----
               const px = x + lado + 0.5;
-              // Marca d'água
-              adicionarMarcaDagua(doc, watermarkText, px, y, lado - 0.5, ticketHeight);
+              // Marca d'água mais suave na parte principal (opacidade 0.12)
+              adicionarMarcaDagua(doc, watermarkText, px, y, lado - 0.5, ticketHeight, 0.12, [180,180,180]);
 
               doc.setDrawColor(204);
               doc.setLineWidth(0.1);
@@ -184,31 +184,25 @@
      * @param {number} y - Posição Y do retângulo
      * @param {number} largura - Largura do retângulo
      * @param {number} altura - Altura do retângulo
+     * @param {number} opacidade - Opacidade (0 a 1)
+     * @param {array} corRGB - Cor [R, G, B]
      */
-    function adicionarMarcaDagua(doc, texto, x, y, largura, altura) {
-      // Salva o estado gráfico
+    function adicionarMarcaDagua(doc, texto, x, y, largura, altura, opacidade = 0.15, corRGB = [180, 180, 180]) {
       doc.saveGraphicsState();
-
-      // Configura transparência (0.15 = bem leve)
-      doc.setGState(new doc.GState({ opacity: 0.12 }));
-
-      // Cor cinza claro
-      doc.setTextColor(180, 180, 180);
-      doc.setFontSize(8); // tamanho grande
+      doc.setGState(new doc.GState({ opacity: opacidade }));
+      doc.setTextColor(corRGB[0], corRGB[1], corRGB[2]);
+      doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
 
-      // Rotação de 30 graus e centralização
       const centerX = x + largura / 2;
       const centerY = y + altura / 2;
 
-      // Aplica transformação: rotaciona no centro da área
       doc.text(texto, centerX, centerY, {
         align: 'center',
         angle: 30,
         renderingMode: 'fill'
       });
 
-      // Restaura o estado gráfico (remove transparência/rotação)
       doc.restoreGraphicsState();
     }
   </script>
