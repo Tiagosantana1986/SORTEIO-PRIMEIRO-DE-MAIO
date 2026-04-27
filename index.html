@@ -75,14 +75,13 @@
     <div class="info-text">
         ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
         Layout: 3 cm altura × 10 cm largura (canhoto 5 cm + parte principal 5 cm).<br>
-        Logo à esquerda, centralizada verticalmente. Fontes grandes (nº 18pt, texto 14pt).
+        Fontes proporcionais: texto 20pt, número 28pt. Logo centralizada verticalmente.
     </div>
 </div>
 
 <script>
     const { jsPDF } = window.jspdf;
 
-    // ---------- Preview da imagem ----------
     document.getElementById('logoInput').addEventListener('change', function (e) {
         const file = e.target.files[0];
         const preview = document.getElementById('preview');
@@ -113,7 +112,6 @@
         const maxPorLote = 2000;
         const adjustedEnd = Math.min(end, start + maxPorLote - 1);
 
-        // ---- Carrega imagem da logo (se houver) ----
         let logoImg = null;
         const fileInput = document.getElementById('logoInput');
         if (fileInput.files.length > 0) {
@@ -127,9 +125,9 @@
 
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-        const ticketHeight = 30;      // 3 cm
-        const ticketWidth = 100;      // 10 cm
-        const lado = 50;              // metade (5 cm)
+        const ticketHeight = 30;
+        const ticketWidth = 100;
+        const lado = 50;
         const colunas = 2;
         const linhas = 9;
         const espacoColunas = 5;
@@ -143,9 +141,9 @@
         const opacidadeMarca = 0.25;
         const corMarca = [140, 140, 140];
 
-        // Tamanhos de fonte: número 18pt (7mm), texto 14pt (5mm)
-        const fontSizeNumero = 7;   // ~18 pt
-        const fontSizeTexto = 5;    // ~14 pt
+        // Fontes proporcionais maiores
+        const fontSizeTexto = 7;   // ~20pt
+        const fontSizeNumero = 10; // ~28pt
 
         try {
             while (current <= adjustedEnd) {
@@ -163,7 +161,7 @@
                         adicionarMarcaDagua(doc, watermarkText, x, y, lado, ticketHeight, opacidadeMarca, corMarca);
                         doc.setDrawColor(204); doc.setLineWidth(0.1);
                         doc.rect(x, y, lado, ticketHeight);
-                        desenharConteudoCentralizado(doc, x, y, lado, ticketHeight, eventoLinha1, eventoLinha2, numeroFormatado, logoImg, fontSizeTexto, fontSizeNumero);
+                        desenharConteudo(doc, x, y, lado, ticketHeight, eventoLinha1, eventoLinha2, numeroFormatado, logoImg, fontSizeTexto, fontSizeNumero);
 
                         // --- LINHA DE CORTE ---
                         const dashX = x + lado;
@@ -178,7 +176,7 @@
                         adicionarMarcaDagua(doc, watermarkText, px, y, lado - 0.5, ticketHeight, opacidadeMarca, corMarca);
                         doc.setDrawColor(204); doc.setLineWidth(0.1);
                         doc.rect(px, y, lado - 0.5, ticketHeight);
-                        desenharConteudoCentralizado(doc, px, y, lado - 0.5, ticketHeight, eventoLinha1, eventoLinha2, numeroFormatado, logoImg, fontSizeTexto, fontSizeNumero);
+                        desenharConteudo(doc, px, y, lado - 0.5, ticketHeight, eventoLinha1, eventoLinha2, numeroFormatado, logoImg, fontSizeTexto, fontSizeNumero);
 
                         // --- LINHA HORIZONTAL ---
                         if (row < linhas - 1) {
@@ -205,60 +203,51 @@
         }
     }
 
-    /**
-     * Desenha o conteúdo do ticket (logo, texto e número) centralizado verticalmente.
-     * - Logo à esquerda, centralizada verticalmente
-     * - Texto do evento + número centralizados verticalmente na área à direita
-     * - Se não houver logo, tudo centralizado horizontalmente
-     */
-    function desenharConteudoCentralizado(doc, x, y, largura, altura, linha1, linha2, numero, logoImg, fontSizeTexto, fontSizeNumero) {
+    function desenharConteudo(doc, x, y, largura, altura, linha1, linha2, numero, logoImg, fontSizeTexto, fontSizeNumero) {
         if (logoImg) {
             // Logo à esquerda, centralizada verticalmente
-            const logoSize = 12; // mm
+            const logoSize = 12;
             const logoX = x + 2;
             const logoY = y + (altura - logoSize) / 2;
             doc.addImage(logoImg, 'PNG', logoX, logoY, logoSize, logoSize);
 
-            // Área de texto à direita da logo
+            // Área de texto (à direita da logo)
             const textoX = logoX + logoSize + 2;
-            const textoLargura = largura - logoSize - 6; // margens
+            const textoLargura = largura - logoSize - 6;
             const textoCentro = textoX + textoLargura / 2;
 
-            // Bloco de texto + número: altura total estimada
-            const alturaTexto = fontSizeTexto * 1.2;   // cada linha com 20% de entrelinha
-            const alturaNumero = fontSizeNumero * 1.2;
-            const blocoH = alturaTexto * 2 + 2 + alturaNumero; // duas linhas de texto, espaço, número
-            const blocoY = y + (altura - blocoH) / 2; // centralizar verticalmente o bloco
-
-            doc.setFontSize(fontSizeTexto);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(0);
-            doc.text(linha1, textoCentro, blocoY + alturaTexto, { align: 'center', maxWidth: textoLargura });
-            doc.text(linha2, textoCentro, blocoY + alturaTexto * 2 + 2, { align: 'center', maxWidth: textoLargura });
-
-            doc.setFontSize(fontSizeNumero);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(0);
-            doc.text(numero, textoCentro, blocoY + alturaTexto * 2 + 2 + alturaNumero, { align: 'center', maxWidth: textoLargura });
-
-        } else {
-            // Sem logo: tudo centralizado horizontalmente e verticalmente
-            const centroX = x + largura / 2;
-            const alturaTexto = fontSizeTexto * 1.2;
-            const alturaNumero = fontSizeNumero * 1.2;
-            const blocoH = alturaTexto * 2 + 2 + alturaNumero;
+            // Calcular altura do bloco de texto + número
+            const alturaLinha = fontSizeTexto * 1.2;
+            const alturaNum = fontSizeNumero * 1.2;
+            const blocoH = alturaLinha * 2 + 2 + alturaNum;
             const blocoY = y + (altura - blocoH) / 2;
 
             doc.setFontSize(fontSizeTexto);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(0);
-            doc.text(linha1, centroX, blocoY + alturaTexto, { align: 'center' });
-            doc.text(linha2, centroX, blocoY + alturaTexto * 2 + 2, { align: 'center' });
+            doc.text(linha1, textoCentro, blocoY + alturaLinha, { align: 'center', maxWidth: textoLargura });
+            doc.text(linha2, textoCentro, blocoY + alturaLinha * 2 + 2, { align: 'center', maxWidth: textoLargura });
 
             doc.setFontSize(fontSizeNumero);
             doc.setFont('helvetica', 'bold');
+            doc.text(numero, textoCentro, blocoY + alturaLinha * 2 + 2 + alturaNum, { align: 'center', maxWidth: textoLargura });
+        } else {
+            // Sem logo: centralizado
+            const centroX = x + largura / 2;
+            const alturaLinha = fontSizeTexto * 1.2;
+            const alturaNum = fontSizeNumero * 1.2;
+            const blocoH = alturaLinha * 2 + 2 + alturaNum;
+            const blocoY = y + (altura - blocoH) / 2;
+
+            doc.setFontSize(fontSizeTexto);
+            doc.setFont('helvetica', 'bold');
             doc.setTextColor(0);
-            doc.text(numero, centroX, blocoY + alturaTexto * 2 + 2 + alturaNumero, { align: 'center' });
+            doc.text(linha1, centroX, blocoY + alturaLinha, { align: 'center' });
+            doc.text(linha2, centroX, blocoY + alturaLinha * 2 + 2, { align: 'center' });
+
+            doc.setFontSize(fontSizeNumero);
+            doc.setFont('helvetica', 'bold');
+            doc.text(numero, centroX, blocoY + alturaLinha * 2 + 2 + alturaNum, { align: 'center' });
         }
     }
 
