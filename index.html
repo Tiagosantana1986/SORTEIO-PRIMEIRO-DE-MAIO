@@ -47,8 +47,8 @@
 
     <div class="info-text">
       ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
-      Layout: 3 cm altura × 6 cm largura (canhoto 3 cm + parte principal 3 cm).<br>
-      Apenas 2 ingressos por linha. Logomarca e numeração grande.
+      Layout: <strong>5 cm altura</strong> × 6 cm largura (canhoto 3 cm + parte principal 3 cm).<br>
+      2 ingressos por linha × 5 linhas = 10 ingressos por folha A4.
     </div>
   </div>
 
@@ -70,14 +70,14 @@
 
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-      // Dimensões do ticket
-      const ticketHeight = 30;      // 3 cm
+      // Dimensões do ticket: altura 5 cm, largura 6 cm
+      const ticketHeight = 50;      // 5 cm
       const ticketWidth = 60;       // 6 cm
       const lado = 30;              // metade (3 cm) para canhoto e parte principal
 
-      const colunas = 2;            // apenas 2 ingressos por linha
-      const linhas = 9;             // 9 × 3 cm = 27 cm
-      const espacoColunas = 5;      // mm entre as duas colunas
+      const colunas = 2;            // 2 ingressos por linha
+      const linhas = 5;             // 5 linhas de 5 cm = 25 cm (cabe na A4)
+      const espacoColunas = 8;      // mm entre as duas colunas
       const totalLargura = colunas * ticketWidth + (colunas - 1) * espacoColunas;
       const marginLeft = (210 - totalLargura) / 2;
       const marginTop = (297 - linhas * ticketHeight) / 2;
@@ -116,15 +116,15 @@
               doc.rect(x, y, lado, ticketHeight);
 
               // Logomarca visual (selo ou imagem)
-              const logoSize = 8; // mm
-              desenharLogo(doc, logoImg, x + (lado - logoSize) / 2, y + 2, logoSize);
+              const logoSize = 10; // mm (maior, pois há mais espaço)
+              desenharLogo(doc, logoImg, x + (lado - logoSize) / 2, y + 4, logoSize);
 
               // Número grande centralizado
-              const fontSizeNum = 10; // mm
+              const fontSizeNum = 12; // mm (bem grande e visível)
               doc.setFontSize(fontSizeNum);
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(0);
-              doc.text(numStr, x + lado / 2, y + logoSize + 13, { align: 'center' });
+              doc.text(numStr, x + lado / 2, y + logoSize + 20, { align: 'center' });
 
               // ---- LINHA DE CORTE VERTICAL (tracejada) ----
               const dashX = x + lado; // exatamente no meio (após 3 cm)
@@ -134,9 +134,9 @@
               doc.line(dashX, y + 2, dashX, y + ticketHeight - 2);
               doc.setLineDash([]);
               // Tesoura
-              doc.setFontSize(4);
+              doc.setFontSize(5);
               doc.setTextColor(136);
-              doc.text('✂', dashX - 2, y + 4, { align: 'center' });
+              doc.text('✂', dashX - 2.5, y + 5, { align: 'center' });
 
               // ---- PARTE PRINCIPAL (direita, 3 cm) ----
               const px = x + lado + 0.5; // pequena folga para a linha de corte
@@ -145,13 +145,13 @@
               doc.rect(px, y, lado - 0.5, ticketHeight);
 
               // Mesma logomarca
-              desenharLogo(doc, logoImg, px + (lado - 0.5 - logoSize) / 2, y + 2, logoSize);
+              desenharLogo(doc, logoImg, px + (lado - 0.5 - logoSize) / 2, y + 4, logoSize);
 
               // Número grande (com "Nº")
               doc.setFontSize(fontSizeNum);
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(0);
-              doc.text(`Nº ${numStr}`, px + (lado - 0.5) / 2, y + logoSize + 13, { align: 'center' });
+              doc.text(`Nº ${numStr}`, px + (lado - 0.5) / 2, y + logoSize + 20, { align: 'center' });
 
               current++;
             }
