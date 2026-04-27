@@ -1,33 +1,37 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gerador de Tickets - Sorteio</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-    .card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); max-width: 500px; width: 100%; text-align: center; }
-    h1 { font-size: 22px; margin-bottom: 6px; }
-    .sub { color: #666; margin: 0 0 4px; }
-    .sub-small { font-size: 13px; color: #888; font-style: italic; margin-bottom: 20px; }
-    .fields { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
-    .field { text-align: left; }
-    .field label { font-size: 13px; font-weight: bold; color: #333; display: block; margin-bottom: 4px; }
-    .field input { width: 130px; padding: 10px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; text-align: center; }
-    .field input[type="text"] { width: 180px; text-align: left; padding-left: 8px; }
-    button { background: #0066cc; color: #fff; border: none; border-radius: 8px; padding: 14px 40px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 16px; }
-    button:disabled { background: #999; cursor: not-allowed; }
-    .msg { margin-top: 16px; font-size: 13px; padding: 10px 16px; border-radius: 8px; }
-    .msg.ok { background: #e8f5e9; color: #2e7d32; }
-    .msg.erro { background: #ffebee; color: #c62828; }
-    .msg.info { background: #f5f5f5; color: #555; }
-    .info-text { font-size: 12px; color: #888; margin-top: 20px; }
-    .section-title { font-size: 14px; font-weight: bold; color: #333; margin: 16px 0 8px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Tickets - Sorteio</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); max-width: 500px; width: 100%; text-align: center; }
+        h1 { font-size: 22px; margin-bottom: 6px; }
+        .sub { color: #666; margin: 0 0 4px; }
+        .sub-small { font-size: 13px; color: #888; font-style: italic; margin-bottom: 20px; }
+        .fields { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .field { text-align: left; }
+        .field label { font-size: 13px; font-weight: bold; color: #333; display: block; margin-bottom: 4px; }
+        .field input { padding: 10px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; }
+        .field input[type="text"] { width: 180px; }
+        .field input[type="number"] { width: 130px; text-align: center; }
+        .file-upload { margin: 10px 0; }
+        .file-upload label { display: block; margin-bottom: 4px; font-weight: bold; }
+        #preview { max-width: 80px; margin-top: 8px; border: 1px solid #ccc; border-radius: 6px; display: none; }
+        button { background: #0066cc; color: #fff; border: none; border-radius: 8px; padding: 14px 40px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 16px; }
+        button:disabled { background: #999; cursor: not-allowed; }
+        .msg { margin-top: 16px; font-size: 13px; padding: 10px 16px; border-radius: 8px; }
+        .msg.ok { background: #e8f5e9; color: #2e7d32; }
+        .msg.erro { background: #ffebee; color: #c62828; }
+        .msg.info { background: #f5f5f5; color: #555; }
+        .info-text { font-size: 12px; color: #888; margin-top: 20px; }
+        .section-title { font-size: 14px; font-weight: bold; color: #333; margin: 16px 0 8px; }
+    </style>
 </head>
 <body>
-  <div class="card">
+<div class="card">
     <div style="font-size: 40px; margin-bottom: 12px;">🎫</div>
     <h1>Gerador de Tickets para Sorteio</h1>
     <p class="sub">Secretaria Municipal de Esporte - Arapongas/PR</p>
@@ -35,168 +39,205 @@
 
     <div class="section-title">Dados do Evento</div>
     <div class="fields">
-      <div class="field">
-        <label>Nome do Evento</label>
-        <input type="text" id="eventoLinha1" value="TORNEIO" placeholder="Ex: TORNEIO">
-      </div>
-      <div class="field">
-        <label>Data / Descrição</label>
-        <input type="text" id="eventoLinha2" value="1º DE MAIO 2026" placeholder="Ex: 1º DE MAIO 2026">
-      </div>
+        <div class="field">
+            <label>Nome do Evento</label>
+            <input type="text" id="eventoLinha1" value="TORNEIO" placeholder="Ex: TORNEIO">
+        </div>
+        <div class="field">
+            <label>Data / Descrição</label>
+            <input type="text" id="eventoLinha2" value="1º DE MAIO 2026" placeholder="Ex: 1º DE MAIO 2026">
+        </div>
+    </div>
+
+    <div class="section-title">Logomarca (opcional)</div>
+    <div class="file-upload">
+        <label for="logoInput">📁 Escolher imagem da logo</label>
+        <input type="file" id="logoInput" accept="image/*" style="font-size: 14px;">
+        <br>
+        <img id="preview" alt="Pré-visualização da logo">
     </div>
 
     <div class="section-title">Numeração</div>
     <div class="fields">
-      <div class="field">
-        <label>Nº Inicial</label>
-        <input type="number" id="start" min="1" max="15000" value="1">
-      </div>
-      <div class="field">
-        <label>Nº Final</label>
-        <input type="number" id="end" min="1" max="15000" value="100">
-      </div>
+        <div class="field">
+            <label>Nº Inicial</label>
+            <input type="number" id="start" min="1" max="15000" value="1">
+        </div>
+        <div class="field">
+            <label>Nº Final</label>
+            <input type="number" id="end" min="1" max="15000" value="100">
+        </div>
     </div>
 
     <button id="gerarBtn" onclick="gerarPDF()">📄 Gerar e Visualizar PDF</button>
     <div id="mensagem" class="msg info" style="display: none;"></div>
 
     <div class="info-text">
-      ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
-      Layout: 3 cm altura × 10 cm largura (canhoto 5 cm + parte principal 5 cm).<br>
-      Ambos os lados mostram "Nº 0001". Marca d'água <strong>igualmente visível</strong> nos dois lados.
+        ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
+        Layout: 3 cm altura × 10 cm largura (canhoto 5 cm + parte principal 5 cm).<br>
+        Ambos os lados mostram "Nº 0001". Marca d'água antifraude.
     </div>
-  </div>
+</div>
 
-  <script>
+<script>
     const { jsPDF } = window.jspdf;
 
+    // ---------- Preview da imagem ----------
+    document.getElementById('logoInput').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById('preview');
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                preview.src = ev.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.style.display = 'none';
+        }
+    });
+
     async function gerarPDF() {
-      const btn = document.getElementById('gerarBtn');
-      const msg = document.getElementById('mensagem');
-      btn.disabled = true;
-      msg.style.display = 'block';
-      msg.className = 'msg.info';
-      msg.textContent = 'Gerando PDF...';
+        const btn = document.getElementById('gerarBtn');
+        const msg = document.getElementById('mensagem');
+        btn.disabled = true;
+        msg.style.display = 'block';
+        msg.className = 'msg.info';
+        msg.textContent = 'Gerando PDF...';
 
-      const eventoLinha1 = document.getElementById('eventoLinha1').value.trim() || 'EVENTO';
-      const eventoLinha2 = document.getElementById('eventoLinha2').value.trim() || 'DATA';
-      const start = Math.max(1, Math.min(parseInt(document.getElementById('start').value) || 1, 15000));
-      const end = Math.min(15000, Math.max(parseInt(document.getElementById('end').value) || 100, start));
-      const maxPorLote = 2000;
-      const adjustedEnd = Math.min(end, start + maxPorLote - 1);
+        const eventoLinha1 = document.getElementById('eventoLinha1').value.trim() || 'EVENTO';
+        const eventoLinha2 = document.getElementById('eventoLinha2').value.trim() || 'DATA';
+        const start = Math.max(1, Math.min(parseInt(document.getElementById('start').value) || 1, 15000));
+        const end = Math.min(15000, Math.max(parseInt(document.getElementById('end').value) || 100, start));
+        const maxPorLote = 2000;
+        const adjustedEnd = Math.min(end, start + maxPorLote - 1);
 
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-      const ticketHeight = 30;
-      const ticketWidth = 100;
-      const lado = 50;
-      const colunas = 2;
-      const linhas = 9;
-      const espacoColunas = 5;
-      const totalLargura = colunas * ticketWidth + (colunas - 1) * espacoColunas;
-      const marginLeft = (210 - totalLargura) / 2;
-      const marginTop = (297 - linhas * ticketHeight) / 2;
-
-      let current = start;
-      let firstPage = true;
-      const watermarkText = 'SEC. ESPORTE ARAPONGAS/PR';
-      
-      // Mesma opacidade e cor para os dois lados
-      const opacidadeMarca = 0.25;
-      const corMarca = [140, 140, 140];
-
-      try {
-        while (current <= adjustedEnd) {
-          if (!firstPage) doc.addPage();
-          firstPage = false;
-
-          for (let row = 0; row < linhas && current <= adjustedEnd; row++) {
-            for (let col = 0; col < colunas && current <= adjustedEnd; col++) {
-              const x = marginLeft + col * (ticketWidth + espacoColunas);
-              const y = marginTop + row * ticketHeight;
-              const numStr = String(current).padStart(4, '0');
-              const numeroFormatado = `Nº ${numStr}`;
-
-              // ---- CANHOTO ----
-              adicionarMarcaDagua(doc, watermarkText, x, y, lado, ticketHeight, opacidadeMarca, corMarca);
-              doc.setDrawColor(204);
-              doc.setLineWidth(0.1);
-              doc.rect(x, y, lado, ticketHeight);
-              doc.setFontSize(7);
-              doc.setFont('helvetica', 'bold');
-              doc.setTextColor(0);
-              doc.text(eventoLinha1, x + lado / 2, y + 5, { align: 'center' });
-              doc.text(eventoLinha2, x + lado / 2, y + 11, { align: 'center' });
-              doc.setFontSize(11);
-              doc.text(numeroFormatado, x + lado / 2, y + 24, { align: 'center' });
-
-              // ---- LINHA DE CORTE ----
-              const dashX = x + lado;
-              doc.setDrawColor(0);
-              doc.setLineWidth(0.2);
-              doc.setLineDash([1.5, 1.5], 0);
-              doc.line(dashX, y + 2, dashX, y + ticketHeight - 2);
-              doc.setLineDash([]);
-              doc.setFontSize(4);
-              doc.setTextColor(136);
-              doc.text('✂', dashX - 2, y + 4, { align: 'center' });
-
-              // ---- PARTE PRINCIPAL (agora com a mesma visibilidade) ----
-              const px = x + lado + 0.5;
-              adicionarMarcaDagua(doc, watermarkText, px, y, lado - 0.5, ticketHeight, opacidadeMarca, corMarca);
-              doc.setDrawColor(204);
-              doc.setLineWidth(0.1);
-              doc.rect(px, y, lado - 0.5, ticketHeight);
-              doc.setFontSize(7);
-              doc.setFont('helvetica', 'bold');
-              doc.setTextColor(0);
-              doc.text(eventoLinha1, px + (lado - 0.5) / 2, y + 5, { align: 'center' });
-              doc.text(eventoLinha2, px + (lado - 0.5) / 2, y + 11, { align: 'center' });
-              doc.setFontSize(11);
-              doc.text(numeroFormatado, px + (lado - 0.5) / 2, y + 24, { align: 'center' });
-
-              if (row < linhas - 1) {
-                doc.setDrawColor(170);
-                doc.setLineWidth(0.1);
-                doc.setLineDash([0.8, 0.8], 0);
-                doc.line(x, y + ticketHeight, x + ticketWidth, y + ticketHeight);
-                doc.setLineDash([]);
-              }
-
-              current++;
-            }
-          }
+        // ---- Carrega imagem da logo (se houver) ----
+        let logoImg = null;
+        const fileInput = document.getElementById('logoInput');
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            logoImg = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(file);
+            });
         }
 
-        const blobUrl = doc.output('bloburl');
-        window.open(blobUrl, '_blank');
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-        const paginas = Math.ceil((adjustedEnd - start + 1) / (linhas * colunas));
-        msg.className = 'msg ok';
-        msg.textContent = `✅ PDF gerado! ${adjustedEnd - start + 1} ingressos em ${paginas} página(s). Aberto para visualização.`;
-      } catch (erro) {
-        msg.className = 'msg erro';
-        msg.textContent = '❌ Erro: ' + erro.message;
-      } finally {
-        btn.disabled = false;
-      }
+        const ticketHeight = 30;
+        const ticketWidth = 100;
+        const lado = 50;
+        const colunas = 2;
+        const linhas = 9;
+        const espacoColunas = 5;
+        const totalLargura = colunas * ticketWidth + (colunas - 1) * espacoColunas;
+        const marginLeft = (210 - totalLargura) / 2;
+        const marginTop = (297 - linhas * ticketHeight) / 2;
+
+        let current = start;
+        let firstPage = true;
+        const watermarkText = 'SEC. ESPORTE ARAPONGAS/PR';
+        const opacidadeMarca = 0.25;
+        const corMarca = [140, 140, 140];
+
+        try {
+            while (current <= adjustedEnd) {
+                if (!firstPage) doc.addPage();
+                firstPage = false;
+
+                for (let row = 0; row < linhas && current <= adjustedEnd; row++) {
+                    for (let col = 0; col < colunas && current <= adjustedEnd; col++) {
+                        const x = marginLeft + col * (ticketWidth + espacoColunas);
+                        const y = marginTop + row * ticketHeight;
+                        const numStr = String(current).padStart(4, '0');
+                        const numeroFormatado = `Nº ${numStr}`;
+
+                        // --- CANHOTO ---
+                        adicionarMarcaDagua(doc, watermarkText, x, y, lado, ticketHeight, opacidadeMarca, corMarca);
+                        doc.setDrawColor(204); doc.setLineWidth(0.1);
+                        doc.rect(x, y, lado, ticketHeight);
+
+                        desenharCabecalho(doc, eventoLinha1, eventoLinha2, logoImg, x, y, lado, ticketHeight);
+
+                        doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+                        doc.text(numeroFormatado, x + lado / 2, y + 24, { align: 'center' });
+
+                        // --- LINHA DE CORTE ---
+                        const dashX = x + lado;
+                        doc.setDrawColor(0); doc.setLineWidth(0.2);
+                        doc.setLineDash([1.5, 1.5]); doc.line(dashX, y + 2, dashX, y + ticketHeight - 2);
+                        doc.setLineDash([]);
+                        doc.setFontSize(4); doc.setTextColor(136);
+                        doc.text('✂', dashX - 2, y + 4, { align: 'center' });
+
+                        // --- PARTE PRINCIPAL ---
+                        const px = x + lado + 0.5;
+                        adicionarMarcaDagua(doc, watermarkText, px, y, lado - 0.5, ticketHeight, opacidadeMarca, corMarca);
+                        doc.setDrawColor(204); doc.setLineWidth(0.1);
+                        doc.rect(px, y, lado - 0.5, ticketHeight);
+
+                        desenharCabecalho(doc, eventoLinha1, eventoLinha2, logoImg, px, y, lado - 0.5, ticketHeight);
+
+                        doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+                        doc.text(numeroFormatado, px + (lado - 0.5) / 2, y + 24, { align: 'center' });
+
+                        // --- LINHA HORIZONTAL ---
+                        if (row < linhas - 1) {
+                            doc.setDrawColor(170); doc.setLineWidth(0.1);
+                            doc.setLineDash([0.8, 0.8]); doc.line(x, y + ticketHeight, x + ticketWidth, y + ticketHeight);
+                            doc.setLineDash([]);
+                        }
+                        current++;
+                    }
+                }
+            }
+
+            const blobUrl = doc.output('bloburl');
+            window.open(blobUrl, '_blank');
+
+            const paginas = Math.ceil((adjustedEnd - start + 1) / (linhas * colunas));
+            msg.className = 'msg.ok';
+            msg.textContent = `✅ PDF gerado! ${adjustedEnd - start + 1} ingressos em ${paginas} página(s).`;
+        } catch (erro) {
+            msg.className = 'msg.erro';
+            msg.textContent = '❌ Erro: ' + erro.message;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    // Desenha a logo (se enviada) ou o texto do evento no topo do ticket
+    function desenharCabecalho(doc, linha1, linha2, logoImg, x, y, largura, altura) {
+        if (logoImg) {
+            // A imagem ocupa o topo (altura de 15 mm, centralizada)
+            const imgHeight = 15;
+            const imgWidth = 15; // mantemos proporção quadrada
+            const imgX = x + (largura - imgWidth) / 2;
+            const imgY = y + 1; // pequena margem superior
+            doc.addImage(logoImg, 'PNG', imgX, imgY, imgWidth, imgHeight);
+        } else {
+            // Fallback: texto do evento
+            doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0);
+            doc.text(linha1, x + largura / 2, y + 5, { align: 'center' });
+            doc.text(linha2, x + largura / 2, y + 11, { align: 'center' });
+        }
     }
 
     function adicionarMarcaDagua(doc, texto, x, y, largura, altura, opacidade = 0.15, corRGB = [180, 180, 180]) {
-      doc.saveGraphicsState();
-      doc.setGState(new doc.GState({ opacity: opacidade }));
-      doc.setTextColor(corRGB[0], corRGB[1], corRGB[2]);
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'bold');
-      const centerX = x + largura / 2;
-      const centerY = y + altura / 2;
-      doc.text(texto, centerX, centerY, {
-        align: 'center',
-        angle: 30,
-        renderingMode: 'fill'
-      });
-      doc.restoreGraphicsState();
+        doc.saveGraphicsState();
+        doc.setGState(new doc.GState({ opacity: opacidade }));
+        doc.setTextColor(corRGB[0], corRGB[1], corRGB[2]);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        const centerX = x + largura / 2;
+        const centerY = y + altura / 2;
+        doc.text(texto, centerX, centerY, { align: 'center', angle: 30, renderingMode: 'fill' });
+        doc.restoreGraphicsState();
     }
-  </script>
+</script>
 </body>
 </html>
