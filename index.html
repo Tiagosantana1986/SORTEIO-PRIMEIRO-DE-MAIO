@@ -48,7 +48,7 @@
     <div class="info-text">
       ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
       Layout: 3 cm altura × 10 cm largura (canhoto 5 cm + parte principal 5 cm).<br>
-      2 ingressos por linha × 9 linhas = 18 ingressos por folha A4.
+      Inscrição "TORNEIO 1º DE MAIO 2026" e numeração grande.
     </div>
   </div>
 
@@ -73,10 +73,10 @@
       // Dimensões do ticket
       const ticketHeight = 30;      // 3 cm
       const ticketWidth = 100;      // 10 cm
-      const lado = 50;              // metade (5 cm) para canhoto e parte principal
+      const lado = 50;              // metade (5 cm)
 
-      const colunas = 2;            // 2 ingressos por linha
-      const linhas = 9;             // 9 linhas de 3 cm = 27 cm (cabe na A4)
+      const colunas = 2;
+      const linhas = 9;             // 9 linhas de 3 cm = 27 cm
       const espacoColunas = 5;      // mm entre as duas colunas
       const totalLargura = colunas * ticketWidth + (colunas - 1) * espacoColunas;
       const marginLeft = (210 - totalLargura) / 2;
@@ -85,110 +85,75 @@
       let current = start;
       let firstPage = true;
 
-      try {
-        // Carrega imagem da logo (opcional)
-        let logoImg = null;
-        try {
-          const resp = await fetch('logo.png');
-          if (resp.ok) {
-            const blob = await resp.blob();
-            logoImg = await new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result);
-              reader.readAsDataURL(blob);
-            });
-          }
-        } catch (e) { /* sem imagem */ }
+      while (current <= adjustedEnd) {
+        if (!firstPage) doc.addPage();
+        firstPage = false;
 
-        while (current <= adjustedEnd) {
-          if (!firstPage) doc.addPage();
-          firstPage = false;
+        for (let row = 0; row < linhas && current <= adjustedEnd; row++) {
+          for (let col = 0; col < colunas && current <= adjustedEnd; col++) {
+            const x = marginLeft + col * (ticketWidth + espacoColunas);
+            const y = marginTop + row * ticketHeight;
+            const numStr = String(current).padStart(4, '0');
 
-          for (let row = 0; row < linhas && current <= adjustedEnd; row++) {
-            for (let col = 0; col < colunas && current <= adjustedEnd; col++) {
-              const x = marginLeft + col * (ticketWidth + espacoColunas);
-              const y = marginTop + row * ticketHeight;
-              const numStr = String(current).padStart(4, '0');
+            // ---- CANHOTO (esquerda, 5 cm) ----
+            doc.setDrawColor(204);
+            doc.setLineWidth(0.1);
+            doc.rect(x, y, lado, ticketHeight);
 
-              // ---- CANHOTO (esquerda, 5 cm) ----
-              doc.setDrawColor(204);
-              doc.setLineWidth(0.1);
-              doc.rect(x, y, lado, ticketHeight);
+            // Inscrição "TORNEIO 1º DE MAIO 2026" no topo
+            doc.setFontSize(3.5);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0);
+            doc.text('TORNEIO 1º DE MAIO 2026', x + lado / 2, y + 4, { align: 'center' });
 
-              // Logomarca visual (tamanho 8 mm)
-              const logoSize = 8;
-              desenharLogo(doc, logoImg, x + (lado - logoSize) / 2, y + 2, logoSize);
+            // Número grande centralizado
+            const fontSizeNum = 10;
+            doc.setFontSize(fontSizeNum);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0);
+            doc.text(numStr, x + lado / 2, y + 17, { align: 'center' });
 
-              // Número grande centralizado
-              const fontSizeNum = 10;
-              doc.setFontSize(fontSizeNum);
-              doc.setFont('helvetica', 'bold');
-              doc.setTextColor(0);
-              doc.text(numStr, x + lado / 2, y + logoSize + 13, { align: 'center' });
+            // ---- LINHA DE CORTE VERTICAL (tracejada) ----
+            const dashX = x + lado;
+            doc.setDrawColor(0);
+            doc.setLineWidth(0.2);
+            doc.setLineDash([1.5, 1.5], 0);
+            doc.line(dashX, y + 2, dashX, y + ticketHeight - 2);
+            doc.setLineDash([]);
+            // Tesoura
+            doc.setFontSize(4);
+            doc.setTextColor(136);
+            doc.text('✂', dashX - 2, y + 5, { align: 'center' });
 
-              // ---- LINHA DE CORTE VERTICAL (tracejada) ----
-              const dashX = x + lado; // exatamente no meio (após 5 cm)
-              doc.setDrawColor(0);
-              doc.setLineWidth(0.2);
-              doc.setLineDash([1.5, 1.5], 0);
-              doc.line(dashX, y + 2, dashX, y + ticketHeight - 2);
-              doc.setLineDash([]);
-              // Tesoura
-              doc.setFontSize(4);
-              doc.setTextColor(136);
-              doc.text('✂', dashX - 2, y + 4, { align: 'center' });
+            // ---- PARTE PRINCIPAL (direita, 5 cm) ----
+            const px = x + lado + 0.5;
+            doc.setDrawColor(204);
+            doc.setLineWidth(0.1);
+            doc.rect(px, y, lado - 0.5, ticketHeight);
 
-              // ---- PARTE PRINCIPAL (direita, 5 cm) ----
-              const px = x + lado + 0.5; // pequena folga para a linha de corte
-              doc.setDrawColor(204);
-              doc.setLineWidth(0.1);
-              doc.rect(px, y, lado - 0.5, ticketHeight);
+            // Mesma inscrição
+            doc.setFontSize(3.5);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0);
+            doc.text('TORNEIO 1º DE MAIO 2026', px + (lado - 0.5) / 2, y + 4, { align: 'center' });
 
-              // Mesma logomarca
-              desenharLogo(doc, logoImg, px + (lado - 0.5 - logoSize) / 2, y + 2, logoSize);
+            // Número grande (com "Nº")
+            doc.setFontSize(fontSizeNum);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0);
+            doc.text(`Nº ${numStr}`, px + (lado - 0.5) / 2, y + 17, { align: 'center' });
 
-              // Número grande (com "Nº")
-              doc.setFontSize(fontSizeNum);
-              doc.setFont('helvetica', 'bold');
-              doc.setTextColor(0);
-              doc.text(`Nº ${numStr}`, px + (lado - 0.5) / 2, y + logoSize + 13, { align: 'center' });
-
-              current++;
-            }
+            current++;
           }
         }
-
-        const filename = `tickets-${String(start).padStart(4,'0')}-${String(adjustedEnd).padStart(4,'0')}.pdf`;
-        doc.save(filename);
-
-        const paginas = Math.ceil((adjustedEnd - start + 1) / (linhas * colunas));
-        msg.className = 'msg ok';
-        msg.textContent = `✅ PDF gerado! ${adjustedEnd - start + 1} ingressos em ${paginas} página(s).`;
-      } catch (erro) {
-        msg.className = 'msg erro';
-        msg.textContent = '❌ Erro: ' + erro.message;
-      } finally {
-        btn.disabled = false;
       }
-    }
 
-    /**
-     * Desenha a logomarca (apenas visual):
-     * - Se existir 'logo.png', usa a imagem.
-     * - Caso contrário, desenha um selo azul com a letra "A".
-     */
-    function desenharLogo(doc, img, x, y, size) {
-      if (img) {
-        doc.addImage(img, 'PNG', x, y, size, size);
-      } else {
-        // Selo azul com "A" (representa a identidade visual)
-        doc.setFillColor(0, 51, 102);
-        doc.rect(x, y, size, size, 'F');
-        doc.setFontSize(size * 0.6);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(255, 255, 255);
-        doc.text('A', x + size/2, y + size/2 + size*0.2, { align: 'center' });
-      }
+      const filename = `tickets-${String(start).padStart(4,'0')}-${String(adjustedEnd).padStart(4,'0')}.pdf`;
+      doc.save(filename);
+
+      const paginas = Math.ceil((adjustedEnd - start + 1) / (linhas * colunas));
+      msg.className = 'msg ok';
+      msg.textContent = `✅ PDF gerado! ${adjustedEnd - start + 1} ingressos em ${paginas} página(s).`;
     }
   </script>
 </body>
