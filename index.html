@@ -41,11 +41,11 @@
     <div class="fields">
         <div class="field">
             <label>Nome do Evento</label>
-            <input type="text" id="eventoLinha1" value="SEMESP" placeholder="Ex: TORNEIO">
+            <input type="text" id="eventoLinha1" value="TORNEIO 1º DE MAIO" placeholder="Ex: TORNEIO">
         </div>
         <div class="field">
             <label>Data / Descrição</label>
-            <input type="text" id="eventoLinha2" value="ARAPONGAS" placeholder="Ex: 1º DE MAIO 2026">
+            <input type="text" id="eventoLinha2" value="2026" placeholder="Ex: 2026">
         </div>
     </div>
 
@@ -75,7 +75,7 @@
     <div class="info-text">
         ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
         Layout: 3 cm altura × 10 cm largura (canhoto 5 cm + parte principal 5 cm).<br>
-        Números alinhados uniformemente. Fonte grande e proporcional.
+        Formatação idêntica em ambos os lados. Números alinhados uniformemente.
     </div>
 </div>
 
@@ -127,7 +127,7 @@
 
         const ticketHeight = 30;
         const ticketWidth = 100;
-        const lado = 50;
+        const lado = 50;            // metade exata (5 cm)
         const colunas = 2;
         const linhas = 9;
         const espacoColunas = 5;
@@ -141,10 +141,10 @@
         const opacidadeMarca = 0.25;
         const corMarca = [140, 140, 140];
 
-        // Fontes corrigidas e alinhamento fixo
-        const fontSizeTexto = 7;     // ~20pt
-        const fontSizeNumero = 11;   // ~31pt
-        const margemInferior = 5;    // distância fixa da base do ticket para o número
+        // Fontes
+        const fontSizeTexto = 7;    // ~20pt
+        const fontSizeNumero = 11;  // ~31pt
+        const margemInferior = 5;   // distância fixa da base para o número
 
         try {
             while (current <= adjustedEnd) {
@@ -156,13 +156,13 @@
                         const x = marginLeft + col * (ticketWidth + espacoColunas);
                         const y = marginTop + row * ticketHeight;
                         const numStr = String(current).padStart(4, '0');
-                        // Usar Unicode \u00BA para o símbolo de número (Nº)
-                        const numeroFormatado = `N\u00BA ${numStr}`;
+                        const numeroFormatado = `N\u00BA ${numStr}`; // Nº
 
                         // --- CANHOTO ---
                         adicionarMarcaDagua(doc, watermarkText, x, y, lado, ticketHeight, opacidadeMarca, corMarca);
                         doc.setDrawColor(204); doc.setLineWidth(0.1);
                         doc.rect(x, y, lado, ticketHeight);
+                        // largura efetiva = lado (50 mm)
                         desenharConteudo(doc, x, y, lado, ticketHeight, eventoLinha1, eventoLinha2, numeroFormatado, logoImg, fontSizeTexto, fontSizeNumero, margemInferior);
 
                         // --- LINHA DE CORTE ---
@@ -174,11 +174,12 @@
                         doc.text('✂', dashX - 2, y + 4, { align: 'center' });
 
                         // --- PARTE PRINCIPAL ---
-                        const px = x + lado + 0.5;
+                        const px = x + lado + 0.5; // folga para linha de corte
                         adicionarMarcaDagua(doc, watermarkText, px, y, lado - 0.5, ticketHeight, opacidadeMarca, corMarca);
                         doc.setDrawColor(204); doc.setLineWidth(0.1);
                         doc.rect(px, y, lado - 0.5, ticketHeight);
-                        desenharConteudo(doc, px, y, lado - 0.5, ticketHeight, eventoLinha1, eventoLinha2, numeroFormatado, logoImg, fontSizeTexto, fontSizeNumero, margemInferior);
+                        // IMPORTANTE: usar a mesma largura efetiva (lado) para centralizar o texto, ignorando a folga do retângulo
+                        desenharConteudo(doc, px, y, lado, ticketHeight, eventoLinha1, eventoLinha2, numeroFormatado, logoImg, fontSizeTexto, fontSizeNumero, margemInferior);
 
                         // --- LINHA HORIZONTAL ---
                         if (row < linhas - 1) {
@@ -206,14 +207,13 @@
     }
 
     /**
-     * Desenha conteúdo com alinhamento FIXO:
-     * - Número sempre na mesma posição Y (base do ticket - margemInferior)
-     * - Texto do evento centralizado verticalmente no espaço acima do número
-     * - Logo à esquerda, centralizada verticalmente em toda a altura
+     * Desenha conteúdo centralizado usando larguraTotal (mm) como referência.
+     * - Número sempre na posição Y fixa (base - margemInferior).
+     * - Texto do evento centralizado verticalmente no espaço acima.
+     * - Logo à esquerda, centralizada verticalmente em toda a altura.
      */
-    function desenharConteudo(doc, x, y, largura, altura, linha1, linha2, numero, logoImg, fontSizeTexto, fontSizeNumero, margemInf) {
-        // Posição Y fixa para o número (a partir da base do ticket)
-        const numeroY = y + altura - margemInf; // linha de base do número
+    function desenharConteudo(doc, x, y, larguraTotal, altura, linha1, linha2, numero, logoImg, fontSizeTexto, fontSizeNumero, margemInf) {
+        const numeroY = y + altura - margemInf;
 
         if (logoImg) {
             const logoSize = 12;
@@ -221,16 +221,15 @@
             const logoY = y + (altura - logoSize) / 2;
             doc.addImage(logoImg, 'PNG', logoX, logoY, logoSize, logoSize);
 
+            // Área de texto começa após a logo
             const textoX = logoX + logoSize + 2;
-            const textoLargura = largura - logoSize - 6;
+            const textoLargura = larguraTotal - logoSize - 6; // margens laterais (2+2+2)
             const textoCentro = textoX + textoLargura / 2;
 
-            // Altura do texto do evento (2 linhas)
             const alturaLinha = fontSizeTexto * 1.2;
-            const alturaBlocoTexto = alturaLinha * 2 + 1; // 1 mm de espaço entre linhas
-            // Centraliza o bloco de texto no espaço entre o topo e o número
-            const espacoDisponivel = numeroY - y - fontSizeNumero * 0.5; // até a base do número
-            const textoY = y + (espacoDisponivel - alturaBlocoTexto) / 2 + alturaLinha; // primeira linha
+            const alturaBlocoTexto = alturaLinha * 2 + 1;
+            const espacoDisponivel = numeroY - y - fontSizeNumero * 0.5;
+            const textoY = y + (espacoDisponivel - alturaBlocoTexto) / 2 + alturaLinha;
 
             doc.setFontSize(fontSizeTexto);
             doc.setFont('helvetica', 'bold');
@@ -238,12 +237,11 @@
             doc.text(linha1, textoCentro, textoY, { align: 'center', maxWidth: textoLargura });
             doc.text(linha2, textoCentro, textoY + alturaLinha + 1, { align: 'center', maxWidth: textoLargura });
 
-            // Número (posição fixa)
             doc.setFontSize(fontSizeNumero);
             doc.setFont('helvetica', 'bold');
             doc.text(numero, textoCentro, numeroY, { align: 'center', maxWidth: textoLargura });
         } else {
-            const centroX = x + largura / 2;
+            const centroX = x + larguraTotal / 2;
             const alturaLinha = fontSizeTexto * 1.2;
             const alturaBlocoTexto = alturaLinha * 2 + 1;
             const espacoDisponivel = numeroY - y - fontSizeNumero * 0.5;
