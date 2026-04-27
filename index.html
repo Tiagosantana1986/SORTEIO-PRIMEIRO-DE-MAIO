@@ -48,7 +48,7 @@
     <div class="info-text">
       ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
       Layout: 3 cm altura × 10 cm largura (canhoto 5 cm + parte principal 5 cm).<br>
-      Fonte grande, uniforme e <strong>marca d'água antifraude reforçada no canhoto</strong>.
+      <strong>Ambos os lados: "Nº 0001"</strong>. Marca d'água reforçada no canhoto.
     </div>
   </div>
 
@@ -85,7 +85,6 @@
       let current = start;
       let firstPage = true;
 
-      // Texto da marca d'água (pode personalizar)
       const watermarkText = 'SEC. ESPORTE ARAPONGAS/PR';
 
       try {
@@ -98,9 +97,10 @@
               const x = marginLeft + col * (ticketWidth + espacoColunas);
               const y = marginTop + row * ticketHeight;
               const numStr = String(current).padStart(4, '0');
+              const numeroFormatado = `Nº ${numStr}`; // formato unificado
 
               // ---- CANHOTO (esquerda, 5 cm) ----
-              // Marca d'água MAIS VISÍVEL no canhoto (opacidade 0.25, cor mais escura)
+              // Marca d'água reforçada
               adicionarMarcaDagua(doc, watermarkText, x, y, lado, ticketHeight, 0.25, [140,140,140]);
 
               // Borda
@@ -115,9 +115,9 @@
               doc.text('TORNEIO', x + lado / 2, y + 5, { align: 'center' });
               doc.text('1º DE MAIO 2026', x + lado / 2, y + 11, { align: 'center' });
 
-              // Número
+              // Número unificado
               doc.setFontSize(11);
-              doc.text(numStr, x + lado / 2, y + 24, { align: 'center' });
+              doc.text(numeroFormatado, x + lado / 2, y + 24, { align: 'center' });
 
               // ---- LINHA DE CORTE VERTICAL ----
               const dashX = x + lado;
@@ -132,7 +132,7 @@
 
               // ---- PARTE PRINCIPAL (direita, 5 cm) ----
               const px = x + lado + 0.5;
-              // Marca d'água mais suave na parte principal (opacidade 0.12)
+              // Marca d'água suave
               adicionarMarcaDagua(doc, watermarkText, px, y, lado - 0.5, ticketHeight, 0.12, [180,180,180]);
 
               doc.setDrawColor(204);
@@ -145,8 +145,9 @@
               doc.text('TORNEIO', px + (lado - 0.5) / 2, y + 5, { align: 'center' });
               doc.text('1º DE MAIO 2026', px + (lado - 0.5) / 2, y + 11, { align: 'center' });
 
+              // Número unificado (igual ao canhoto)
               doc.setFontSize(11);
-              doc.text(`Nº ${numStr}`, px + (lado - 0.5) / 2, y + 24, { align: 'center' });
+              doc.text(numeroFormatado, px + (lado - 0.5) / 2, y + 24, { align: 'center' });
 
               // ---- LINHA DE CORTE HORIZONTAL ----
               if (row < linhas - 1) {
@@ -176,17 +177,6 @@
       }
     }
 
-    /**
-     * Adiciona marca d'água rotacionada no fundo do ticket.
-     * @param {jsPDF} doc
-     * @param {string} texto - Texto da marca d'água
-     * @param {number} x - Posição X do retângulo
-     * @param {number} y - Posição Y do retângulo
-     * @param {number} largura - Largura do retângulo
-     * @param {number} altura - Altura do retângulo
-     * @param {number} opacidade - Opacidade (0 a 1)
-     * @param {array} corRGB - Cor [R, G, B]
-     */
     function adicionarMarcaDagua(doc, texto, x, y, largura, altura, opacidade = 0.15, corRGB = [180, 180, 180]) {
       doc.saveGraphicsState();
       doc.setGState(new doc.GState({ opacity: opacidade }));
