@@ -48,7 +48,7 @@
     <div class="info-text">
       ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
       Layout: 3 cm altura × 6 cm largura (canhoto 3 cm + parte principal 3 cm).<br>
-      Logomarca oficial com texto definido. Números centralizados.
+      Apenas logomarca e numeração grande.
     </div>
   </div>
 
@@ -86,7 +86,7 @@
       let firstPage = true;
 
       try {
-        // Carrega imagem da logo (opcional, se existir logo.png)
+        // Carrega imagem da logo (opcional)
         let logoImg = null;
         try {
           const resp = await fetch('logo.png');
@@ -98,7 +98,7 @@
               reader.readAsDataURL(blob);
             });
           }
-        } catch (e) { /* sem imagem, usa texto */ }
+        } catch (e) { /* sem imagem */ }
 
         while (current <= adjustedEnd) {
           if (!firstPage) doc.addPage();
@@ -115,15 +115,16 @@
               doc.setLineWidth(0.1);
               doc.rect(x, y, lado, ticketHeight);
 
-              // Logomarca definida (ocupa topo)
-              const logoHeight = 10; // mm
-              desenharLogoDefinida(doc, logoImg, x + 1, y + 1, lado - 2, logoHeight);
+              // Logo visual (apenas imagem ou selo "A")
+              const logoSize = 8; // mm
+              desenharLogo(doc, logoImg, x + (lado - logoSize) / 2, y + 2, logoSize);
 
-              // Número centralizado abaixo da logo
-              doc.setFontSize(7);
+              // Número grande centralizado
+              const fontSizeNum = 10; // mm
+              doc.setFontSize(fontSizeNum);
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(0);
-              doc.text(numStr, x + lado / 2, y + logoHeight + 11, { align: 'center' });
+              doc.text(numStr, x + lado / 2, y + logoSize + 13, { align: 'center' });
 
               // ---- LINHA DE CORTE VERTICAL (tracejada) ----
               const dashX = x + lado; // exatamente no meio
@@ -143,14 +144,14 @@
               doc.setLineWidth(0.1);
               doc.rect(px, y, lado - 0.5, ticketHeight);
 
-              // Mesma logomarca definida
-              desenharLogoDefinida(doc, logoImg, px + 1, y + 1, lado - 2.5, logoHeight);
+              // Mesma logo
+              desenharLogo(doc, logoImg, px + (lado - 0.5 - logoSize) / 2, y + 2, logoSize);
 
-              // Número (mesmo tamanho e posição)
-              doc.setFontSize(7);
+              // Número grande (com "Nº")
+              doc.setFontSize(fontSizeNum);
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(0);
-              doc.text(`Nº ${numStr}`, px + (lado - 0.5) / 2, y + logoHeight + 11, { align: 'center' });
+              doc.text(`Nº ${numStr}`, px + (lado - 0.5) / 2, y + logoSize + 13, { align: 'center' });
 
               current++;
             }
@@ -172,50 +173,21 @@
     }
 
     /**
-     * Desenha a logomarca oficial:
-     * - Fundo azul
-     * - Faixa branca no topo com "PREFEITURA DE"
-     * - "ARAPONGAS" em destaque
-     * - Linha amarela
-     * - "NOSSA CIDADE, NOSSO COMPROMISSO." em branco
-     * Ou usa a imagem se fornecida.
+     * Desenha a logomarca (apenas visual, sem texto):
+     * - Se existir 'logo.png', usa a imagem.
+     * - Caso contrário, desenha um selo azul com a letra "A".
      */
-    function desenharLogoDefinida(doc, img, x, y, largura, altura) {
+    function desenharLogo(doc, img, x, y, size) {
       if (img) {
-        // Se tem imagem, desenha proporcionalmente
-        doc.addImage(img, 'PNG', x, y, largura, altura);
+        doc.addImage(img, 'PNG', x, y, size, size);
       } else {
-        // Desenho vetorial da logomarca
-        const w = largura;
-        const h = altura;
-
-        // Fundo azul
-        doc.setFillColor(0, 51, 102); // azul escuro
-        doc.rect(x, y, w, h, 'F');
-
-        // Faixa branca superior (30% da altura)
-        doc.setFillColor(255, 255, 255);
-        doc.rect(x, y, w, h * 0.3, 'F');
-
-        // "PREFEITURA DE" em azul sobre o branco
-        doc.setFontSize(h * 0.2);
+        // Selo azul com "A" (representa a identidade visual)
+        doc.setFillColor(0, 51, 102);
+        doc.rect(x, y, size, size, 'F');
+        doc.setFontSize(size * 0.6);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 51, 102);
-        doc.text('PREFEITURA DE', x + w / 2, y + h * 0.12, { align: 'center' });
-
-        // "ARAPONGAS" em azul (um pouco abaixo)
-        doc.setFontSize(h * 0.28);
-        doc.text('ARAPONGAS', x + w / 2, y + h * 0.26, { align: 'center' });
-
-        // Linha amarela
-        doc.setFillColor(255, 204, 0);
-        doc.rect(x, y + h * 0.4, w, h * 0.06, 'F');
-
-        // Slogan em branco
-        doc.setFontSize(h * 0.13);
-        doc.setFont('helvetica', 'normal');
         doc.setTextColor(255, 255, 255);
-        doc.text('NOSSA CIDADE, NOSSO COMPROMISSO.', x + w / 2, y + h * 0.55, { align: 'center' });
+        doc.text('A', x + size/2, y + size/2 + size*0.2, { align: 'center' });
       }
     }
   </script>
