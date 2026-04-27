@@ -8,9 +8,9 @@
   <style>
     body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
     .card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); max-width: 500px; width: 100%; text-align: center; }
-    h1 { font-size: 24px; margin-bottom: 6px; }
+    h1 { font-size: 22px; margin-bottom: 6px; }
     .sub { color: #666; margin: 0 0 4px; }
-    .sub-small { font-size: 13px; color: #888; font-style: italic; margin-bottom: 24px; }
+    .sub-small { font-size: 13px; color: #888; font-style: italic; margin-bottom: 20px; }
     .fields { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
     .field { text-align: left; }
     .field label { font-size: 13px; font-weight: bold; color: #333; display: block; margin-bottom: 4px; }
@@ -21,6 +21,7 @@
     .msg.ok { background: #e8f5e9; color: #2e7d32; }
     .msg.erro { background: #ffebee; color: #c62828; }
     .msg.info { background: #f5f5f5; color: #555; }
+    .info-text { font-size: 12px; color: #888; margin-top: 20px; text-align: center; }
   </style>
 </head>
 <body>
@@ -44,11 +45,11 @@
     <button id="gerarBtn" onclick="gerarPDF()">📄 Gerar PDF</button>
     <div id="mensagem" class="msg info" style="display: none;"></div>
 
-    <p style="font-size: 12px; color: #888; margin-top: 24px;">
+    <div class="info-text">
       ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
-      Layout: 2,7 cm altura × 6 cm largura = 30 ingressos por folha A4 (10 linhas × 3 colunas).<br>
-      Apenas número e logomarca (sem textos).
-    </p>
+      Layout: 3 cm altura × 6 cm largura (canhoto 3 cm + parte principal 3 cm).<br>
+      Apenas número e logomarca. 27 ingressos por página (3 colunas × 9 linhas).
+    </div>
   </div>
 
   <script>
@@ -69,24 +70,23 @@
 
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-      // Dimensões fixas
-      const ticketHeight = 27;      // 2,7 cm (para caber 10 linhas em 27 cm)
+      // Dimensões exatas
+      const ticketHeight = 30;      // 3 cm
       const ticketWidth = 60;       // 6 cm
-      const canhotoWidth = 20;      // 2 cm (esquerda)
-      const gap = 2;               // linha de corte
-      const principalWidth = ticketWidth - canhotoWidth - gap; // 38 mm
+      const lado = 30;              // metade (3 cm) para canhoto e principal
 
       const colunas = 3;
-      const linhas = 10;            // 10 × 27 mm = 270 mm (cabe em A4)
-      const totalWidth = colunas * ticketWidth + (colunas - 1) * 2; // espaçamento entre colunas 2 mm
-      const marginLeft = (210 - totalWidth) / 2;   // centraliza horizontalmente
-      const marginTop = (297 - linhas * ticketHeight) / 2; // centraliza verticalmente
+      const linhas = 9;             // 9 × 3 cm = 27 cm (cabe na folha A4)
+      const espacoColunas = 2;      // mm entre colunas
+      const totalLargura = colunas * ticketWidth + (colunas - 1) * espacoColunas;
+      const marginLeft = (210 - totalLargura) / 2;
+      const marginTop = (297 - linhas * ticketHeight) / 2;
 
       let current = start;
       let firstPage = true;
 
       try {
-        // Carregar imagem da logo (opcional)
+        // Carrega imagem da logo (opcional)
         let logoImg = null;
         try {
           const resp = await fetch('logo.png');
@@ -98,7 +98,7 @@
               reader.readAsDataURL(blob);
             });
           }
-        } catch (e) { /* sem imagem */ }
+        } catch (e) { /* sem logo */ }
 
         while (current <= adjustedEnd) {
           if (!firstPage) doc.addPage();
@@ -106,51 +106,48 @@
 
           for (let row = 0; row < linhas && current <= adjustedEnd; row++) {
             for (let col = 0; col < colunas && current <= adjustedEnd; col++) {
-              const x = marginLeft + col * (ticketWidth + 2);
+              const x = marginLeft + col * (ticketWidth + espacoColunas);
               const y = marginTop + row * ticketHeight;
               const numStr = String(current).padStart(4, '0');
 
-              // ---- CANHOTO (esquerda) ----
+              // ---- CANHOTO (esquerda, 3 cm) ----
               doc.setDrawColor(204);
               doc.setLineWidth(0.1);
-              doc.rect(x, y, canhotoWidth, ticketHeight);
+              doc.rect(x, y, lado, ticketHeight);
 
-              // Logo / selo
-              desenharLogo(doc, logoImg, x + 2, y + 2, 6); // quadrado 6 mm
-
-              // Número (apenas)
-              doc.setFontSize(5);
+              // Logo no canhoto (tamanho 6 mm)
+              desenharLogo(doc, logoImg, x + 2, y + 2, 6);
+              // Número
+              doc.setFontSize(6);
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(0);
-              doc.text(numStr, x + canhotoWidth / 2, y + ticketHeight - 5, { align: 'center' });
+              doc.text(numStr, x + lado / 2, y + ticketHeight - 5, { align: 'center' });
 
-              // ---- LINHA DE CORTE VERTICAL ----
-              const dashX = x + canhotoWidth + gap / 2;
+              // ---- LINHA DE CORTE VERTICAL (tracejada) ----
+              const dashX = x + lado; // exatamente no meio
               doc.setDrawColor(0);
               doc.setLineWidth(0.2);
               doc.setLineDash([1.5, 1.5], 0);
               doc.line(dashX, y + 2, dashX, y + ticketHeight - 2);
               doc.setLineDash([]);
-
               // Tesoura
-              doc.setFontSize(3);
+              doc.setFontSize(4);
               doc.setTextColor(136);
               doc.text('✂', dashX - 2, y + 4, { align: 'center' });
 
-              // ---- PARTE PRINCIPAL (direita) ----
-              const px = x + canhotoWidth + gap;
+              // ---- PARTE PRINCIPAL (direita, 3 cm) ----
+              const px = x + lado + 0.5; // pequena folga para a linha de corte
               doc.setDrawColor(204);
               doc.setLineWidth(0.1);
-              doc.rect(px, y, principalWidth, ticketHeight);
+              doc.rect(px, y, lado - 0.5, ticketHeight);
 
-              // Logo
-              desenharLogo(doc, logoImg, px + 3, y + 4, 8); // 8 mm
-
-              // Número do ticket
-              doc.setFontSize(6);
+              // Logo (tamanho 8 mm)
+              desenharLogo(doc, logoImg, px + 1.5, y + 2, 8);
+              // Número
+              doc.setFontSize(8);
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(0);
-              doc.text(`Nº ${numStr}`, px + principalWidth / 2, y + ticketHeight - 7, { align: 'center' });
+              doc.text(`Nº ${numStr}`, px + (lado - 0.5) / 2, y + ticketHeight - 6, { align: 'center' });
 
               current++;
             }
@@ -175,7 +172,7 @@
       if (img) {
         doc.addImage(img, 'PNG', x, y, size, size);
       } else {
-        // Selo azul com "A" de Arapongas
+        // Selo azul com "A" (representa Prefeitura de Arapongas)
         doc.setFillColor(0, 51, 102);
         doc.rect(x, y, size, size, 'F');
         doc.setFontSize(size * 0.6);
