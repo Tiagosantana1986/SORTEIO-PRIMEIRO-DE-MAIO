@@ -63,7 +63,7 @@
     <div class="info-text">
       ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
       Layout: 3 cm altura × 10 cm largura (canhoto 5 cm + parte principal 5 cm).<br>
-      Ambos os lados mostram "Nº 0001". Marca d'água antifraude.
+      Ambos os lados mostram "Nº 0001". Marca d'água <strong>igualmente visível</strong> nos dois lados.
     </div>
   </div>
 
@@ -78,7 +78,6 @@
       msg.className = 'msg.info';
       msg.textContent = 'Gerando PDF...';
 
-      // Obtém valores dos campos editáveis
       const eventoLinha1 = document.getElementById('eventoLinha1').value.trim() || 'EVENTO';
       const eventoLinha2 = document.getElementById('eventoLinha2').value.trim() || 'DATA';
       const start = Math.max(1, Math.min(parseInt(document.getElementById('start').value) || 1, 15000));
@@ -101,6 +100,10 @@
       let current = start;
       let firstPage = true;
       const watermarkText = 'SEC. ESPORTE ARAPONGAS/PR';
+      
+      // Mesma opacidade e cor para os dois lados
+      const opacidadeMarca = 0.25;
+      const corMarca = [140, 140, 140];
 
       try {
         while (current <= adjustedEnd) {
@@ -115,7 +118,7 @@
               const numeroFormatado = `Nº ${numStr}`;
 
               // ---- CANHOTO ----
-              adicionarMarcaDagua(doc, watermarkText, x, y, lado, ticketHeight, 0.25, [140,140,140]);
+              adicionarMarcaDagua(doc, watermarkText, x, y, lado, ticketHeight, opacidadeMarca, corMarca);
               doc.setDrawColor(204);
               doc.setLineWidth(0.1);
               doc.rect(x, y, lado, ticketHeight);
@@ -138,9 +141,9 @@
               doc.setTextColor(136);
               doc.text('✂', dashX - 2, y + 4, { align: 'center' });
 
-              // ---- PARTE PRINCIPAL ----
+              // ---- PARTE PRINCIPAL (agora com a mesma visibilidade) ----
               const px = x + lado + 0.5;
-              adicionarMarcaDagua(doc, watermarkText, px, y, lado - 0.5, ticketHeight, 0.12, [180,180,180]);
+              adicionarMarcaDagua(doc, watermarkText, px, y, lado - 0.5, ticketHeight, opacidadeMarca, corMarca);
               doc.setDrawColor(204);
               doc.setLineWidth(0.1);
               doc.rect(px, y, lado - 0.5, ticketHeight);
