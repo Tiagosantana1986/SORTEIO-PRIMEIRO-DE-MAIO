@@ -48,7 +48,7 @@
     <div class="info-text">
       ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
       Layout: 3 cm altura × 10 cm largura (canhoto 5 cm + parte principal 5 cm).<br>
-      Fonte grande e uniforme: "TORNEIO 1º DE MAIO 2026" + número destacado.
+      Fonte grande, uniforme e <strong>marca d'água antifraude</strong>.
     </div>
   </div>
 
@@ -73,17 +73,20 @@
       // Dimensões do ticket
       const ticketHeight = 30;      // 3 cm
       const ticketWidth = 100;      // 10 cm
-      const lado = 50;              // metade (5 cm) para canhoto e parte principal
+      const lado = 50;              // metade (5 cm)
 
       const colunas = 2;            // 2 ingressos por linha
-      const linhas = 9;             // 9 linhas de 3 cm = 27 cm (cabe na A4)
-      const espacoColunas = 5;      // mm entre as duas colunas
+      const linhas = 9;             // 9 linhas de 3 cm = 27 cm
+      const espacoColunas = 5;      // mm entre colunas
       const totalLargura = colunas * ticketWidth + (colunas - 1) * espacoColunas;
       const marginLeft = (210 - totalLargura) / 2;
       const marginTop = (297 - linhas * ticketHeight) / 2;
 
       let current = start;
       let firstPage = true;
+
+      // Texto da marca d'água (pode personalizar)
+      const watermarkText = 'SEC. ESPORTE ARAPONGAS/PR';
 
       try {
         while (current <= adjustedEnd) {
@@ -97,51 +100,55 @@
               const numStr = String(current).padStart(4, '0');
 
               // ---- CANHOTO (esquerda, 5 cm) ----
+              // Marca d'água primeiro (fundo)
+              adicionarMarcaDagua(doc, watermarkText, x, y, lado, ticketHeight);
+
+              // Borda
               doc.setDrawColor(204);
               doc.setLineWidth(0.1);
               doc.rect(x, y, lado, ticketHeight);
 
-              // Texto do torneio (fonte 7 mm)
+              // Texto do torneio
               doc.setFontSize(7);
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(0);
               doc.text('TORNEIO', x + lado / 2, y + 5, { align: 'center' });
               doc.text('1º DE MAIO 2026', x + lado / 2, y + 11, { align: 'center' });
 
-              // Número grande (fonte 11 mm)
+              // Número
               doc.setFontSize(11);
               doc.text(numStr, x + lado / 2, y + 24, { align: 'center' });
 
-              // ---- LINHA DE CORTE VERTICAL (tracejada) ----
-              const dashX = x + lado; // exatamente no meio (após 5 cm)
+              // ---- LINHA DE CORTE VERTICAL ----
+              const dashX = x + lado;
               doc.setDrawColor(0);
               doc.setLineWidth(0.2);
               doc.setLineDash([1.5, 1.5], 0);
               doc.line(dashX, y + 2, dashX, y + ticketHeight - 2);
               doc.setLineDash([]);
-              // Tesoura
               doc.setFontSize(4);
               doc.setTextColor(136);
               doc.text('✂', dashX - 2, y + 4, { align: 'center' });
 
               // ---- PARTE PRINCIPAL (direita, 5 cm) ----
-              const px = x + lado + 0.5; // pequena folga para a linha de corte
+              const px = x + lado + 0.5;
+              // Marca d'água
+              adicionarMarcaDagua(doc, watermarkText, px, y, lado - 0.5, ticketHeight);
+
               doc.setDrawColor(204);
               doc.setLineWidth(0.1);
               doc.rect(px, y, lado - 0.5, ticketHeight);
 
-              // Mesmo texto do torneio (fonte 7 mm)
               doc.setFontSize(7);
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(0);
               doc.text('TORNEIO', px + (lado - 0.5) / 2, y + 5, { align: 'center' });
               doc.text('1º DE MAIO 2026', px + (lado - 0.5) / 2, y + 11, { align: 'center' });
 
-              // Número grande com "Nº" (fonte 11 mm)
               doc.setFontSize(11);
               doc.text(`Nº ${numStr}`, px + (lado - 0.5) / 2, y + 24, { align: 'center' });
 
-              // ---- LINHA DE CORTE HORIZONTAL (entre ingressos) ----
+              // ---- LINHA DE CORTE HORIZONTAL ----
               if (row < linhas - 1) {
                 doc.setDrawColor(170);
                 doc.setLineWidth(0.1);
@@ -167,6 +174,42 @@
       } finally {
         btn.disabled = false;
       }
+    }
+
+    /**
+     * Adiciona marca d'água rotacionada no fundo do ticket.
+     * @param {jsPDF} doc
+     * @param {string} texto - Texto da marca d'água
+     * @param {number} x - Posição X do retângulo
+     * @param {number} y - Posição Y do retângulo
+     * @param {number} largura - Largura do retângulo
+     * @param {number} altura - Altura do retângulo
+     */
+    function adicionarMarcaDagua(doc, texto, x, y, largura, altura) {
+      // Salva o estado gráfico
+      doc.saveGraphicsState();
+
+      // Configura transparência (0.15 = bem leve)
+      doc.setGState(new doc.GState({ opacity: 0.12 }));
+
+      // Cor cinza claro
+      doc.setTextColor(180, 180, 180);
+      doc.setFontSize(8); // tamanho grande
+      doc.setFont('helvetica', 'bold');
+
+      // Rotação de 30 graus e centralização
+      const centerX = x + largura / 2;
+      const centerY = y + altura / 2;
+
+      // Aplica transformação: rotaciona no centro da área
+      doc.text(texto, centerX, centerY, {
+        align: 'center',
+        angle: 30,
+        renderingMode: 'fill'
+      });
+
+      // Restaura o estado gráfico (remove transparência/rotação)
+      doc.restoreGraphicsState();
     }
   </script>
 </body>
