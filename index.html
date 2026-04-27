@@ -48,7 +48,7 @@
     <div class="info-text">
       ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
       Layout: 3 cm altura × 10 cm largura (canhoto 5 cm + parte principal 5 cm).<br>
-      Texto "TORNEIO 1º DE MAIO 2026" no topo. Fonte grande e uniforme.
+      Fonte grande e uniforme: "TORNEIO 1º DE MAIO 2026" + número destacado.
     </div>
   </div>
 
@@ -101,18 +101,16 @@
               doc.setLineWidth(0.1);
               doc.rect(x, y, lado, ticketHeight);
 
-              // Texto "TORNEIO 1º DE MAIO 2026" no topo
-              doc.setFontSize(5);
+              // Texto do torneio (fonte 7 mm)
+              doc.setFontSize(7);
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(0);
-              doc.text('TORNEIO', x + lado / 2, y + 4, { align: 'center' });
-              doc.text('1º DE MAIO 2026', x + lado / 2, y + 9, { align: 'center' });
+              doc.text('TORNEIO', x + lado / 2, y + 5, { align: 'center' });
+              doc.text('1º DE MAIO 2026', x + lado / 2, y + 11, { align: 'center' });
 
-              // Número grande centralizado
-              doc.setFontSize(9);
-              doc.setFont('helvetica', 'bold');
-              doc.setTextColor(0);
-              doc.text(numStr, x + lado / 2, y + 22, { align: 'center' });
+              // Número grande (fonte 11 mm)
+              doc.setFontSize(11);
+              doc.text(numStr, x + lado / 2, y + 24, { align: 'center' });
 
               // ---- LINHA DE CORTE VERTICAL (tracejada) ----
               const dashX = x + lado; // exatamente no meio (após 5 cm)
@@ -132,18 +130,16 @@
               doc.setLineWidth(0.1);
               doc.rect(px, y, lado - 0.5, ticketHeight);
 
-              // Mesmo texto do torneio
-              doc.setFontSize(5);
+              // Mesmo texto do torneio (fonte 7 mm)
+              doc.setFontSize(7);
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(0);
-              doc.text('TORNEIO', px + (lado - 0.5) / 2, y + 4, { align: 'center' });
-              doc.text('1º DE MAIO 2026', px + (lado - 0.5) / 2, y + 9, { align: 'center' });
+              doc.text('TORNEIO', px + (lado - 0.5) / 2, y + 5, { align: 'center' });
+              doc.text('1º DE MAIO 2026', px + (lado - 0.5) / 2, y + 11, { align: 'center' });
 
-              // Número grande (com "Nº")
-              doc.setFontSize(9);
-              doc.setFont('helvetica', 'bold');
-              doc.setTextColor(0);
-              doc.text(`Nº ${numStr}`, px + (lado - 0.5) / 2, y + 22, { align: 'center' });
+              // Número grande com "Nº" (fonte 11 mm)
+              doc.setFontSize(11);
+              doc.text(`Nº ${numStr}`, px + (lado - 0.5) / 2, y + 24, { align: 'center' });
 
               // ---- LINHA DE CORTE HORIZONTAL (entre ingressos) ----
               if (row < linhas - 1) {
