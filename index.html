@@ -41,11 +41,11 @@
     <div class="fields">
         <div class="field">
             <label>Nome do Evento</label>
-            <input type="text" id="eventoLinha1" value="TORNEIO" placeholder="Ex: TORNEIO">
+            <input type="text" id="eventoLinha1" value="SEMESP" placeholder="Ex: TORNEIO">
         </div>
         <div class="field">
             <label>Data / Descrição</label>
-            <input type="text" id="eventoLinha2" value="1º DE MAIO 2026" placeholder="Ex: 1º DE MAIO 2026">
+            <input type="text" id="eventoLinha2" value="ARAPONGAS" placeholder="Ex: 1º DE MAIO 2026">
         </div>
     </div>
 
@@ -75,7 +75,7 @@
     <div class="info-text">
         ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
         Layout: 3 cm altura × 10 cm largura (canhoto 5 cm + parte principal 5 cm).<br>
-        Logo no canto esquerdo, textos <strong>centralizados</strong> na área restante.
+        Logo à esquerda, centralizada verticalmente. Fontes grandes (nº 18pt, texto 14pt).
     </div>
 </div>
 
@@ -127,9 +127,9 @@
 
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-        const ticketHeight = 30;
-        const ticketWidth = 100;
-        const lado = 50;
+        const ticketHeight = 30;      // 3 cm
+        const ticketWidth = 100;      // 10 cm
+        const lado = 50;              // metade (5 cm)
         const colunas = 2;
         const linhas = 9;
         const espacoColunas = 5;
@@ -142,6 +142,10 @@
         const watermarkText = 'SEC. ESPORTE ARAPONGAS/PR';
         const opacidadeMarca = 0.25;
         const corMarca = [140, 140, 140];
+
+        // Tamanhos de fonte: número 18pt (7mm), texto 14pt (5mm)
+        const fontSizeNumero = 7;   // ~18 pt
+        const fontSizeTexto = 5;    // ~14 pt
 
         try {
             while (current <= adjustedEnd) {
@@ -159,11 +163,7 @@
                         adicionarMarcaDagua(doc, watermarkText, x, y, lado, ticketHeight, opacidadeMarca, corMarca);
                         doc.setDrawColor(204); doc.setLineWidth(0.1);
                         doc.rect(x, y, lado, ticketHeight);
-
-                        desenharCabecalho(doc, eventoLinha1, eventoLinha2, logoImg, x, y, lado, ticketHeight);
-
-                        doc.setFontSize(11); doc.setFont('helvetica', 'bold');
-                        doc.text(numeroFormatado, x + lado / 2, y + 24, { align: 'center' });
+                        desenharConteudoCentralizado(doc, x, y, lado, ticketHeight, eventoLinha1, eventoLinha2, numeroFormatado, logoImg, fontSizeTexto, fontSizeNumero);
 
                         // --- LINHA DE CORTE ---
                         const dashX = x + lado;
@@ -178,11 +178,7 @@
                         adicionarMarcaDagua(doc, watermarkText, px, y, lado - 0.5, ticketHeight, opacidadeMarca, corMarca);
                         doc.setDrawColor(204); doc.setLineWidth(0.1);
                         doc.rect(px, y, lado - 0.5, ticketHeight);
-
-                        desenharCabecalho(doc, eventoLinha1, eventoLinha2, logoImg, px, y, lado - 0.5, ticketHeight);
-
-                        doc.setFontSize(11); doc.setFont('helvetica', 'bold');
-                        doc.text(numeroFormatado, px + (lado - 0.5) / 2, y + 24, { align: 'center' });
+                        desenharConteudoCentralizado(doc, px, y, lado - 0.5, ticketHeight, eventoLinha1, eventoLinha2, numeroFormatado, logoImg, fontSizeTexto, fontSizeNumero);
 
                         // --- LINHA HORIZONTAL ---
                         if (row < linhas - 1) {
@@ -210,36 +206,59 @@
     }
 
     /**
-     * Desenha o cabeçalho do ticket:
-     * - Se houver logo: imagem no canto esquerdo; textos centralizados na área à direita.
-     * - Sem logo: textos centralizados em toda a largura.
+     * Desenha o conteúdo do ticket (logo, texto e número) centralizado verticalmente.
+     * - Logo à esquerda, centralizada verticalmente
+     * - Texto do evento + número centralizados verticalmente na área à direita
+     * - Se não houver logo, tudo centralizado horizontalmente
      */
-    function desenharCabecalho(doc, linha1, linha2, logoImg, x, y, largura, altura) {
+    function desenharConteudoCentralizado(doc, x, y, largura, altura, linha1, linha2, numero, logoImg, fontSizeTexto, fontSizeNumero) {
         if (logoImg) {
-            // Logo no canto esquerdo
-            const logoSize = 10;
+            // Logo à esquerda, centralizada verticalmente
+            const logoSize = 12; // mm
             const logoX = x + 2;
-            const logoY = y + 2;
+            const logoY = y + (altura - logoSize) / 2;
             doc.addImage(logoImg, 'PNG', logoX, logoY, logoSize, logoSize);
 
             // Área de texto à direita da logo
-            const textoX = logoX + logoSize + 2;      // margem esquerda após a logo
-            const textoLargura = largura - logoSize - 6; // margens laterais somadas (2+2+2)
-            const centroTexto = textoX + textoLargura / 2;
+            const textoX = logoX + logoSize + 2;
+            const textoLargura = largura - logoSize - 6; // margens
+            const textoCentro = textoX + textoLargura / 2;
 
-            doc.setFontSize(6);
+            // Bloco de texto + número: altura total estimada
+            const alturaTexto = fontSizeTexto * 1.2;   // cada linha com 20% de entrelinha
+            const alturaNumero = fontSizeNumero * 1.2;
+            const blocoH = alturaTexto * 2 + 2 + alturaNumero; // duas linhas de texto, espaço, número
+            const blocoY = y + (altura - blocoH) / 2; // centralizar verticalmente o bloco
+
+            doc.setFontSize(fontSizeTexto);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(0);
-            // Centralizado na área de texto
-            doc.text(linha1, centroTexto, y + 6, { align: 'center', maxWidth: textoLargura });
-            doc.text(linha2, centroTexto, y + 12, { align: 'center', maxWidth: textoLargura });
+            doc.text(linha1, textoCentro, blocoY + alturaTexto, { align: 'center', maxWidth: textoLargura });
+            doc.text(linha2, textoCentro, blocoY + alturaTexto * 2 + 2, { align: 'center', maxWidth: textoLargura });
+
+            doc.setFontSize(fontSizeNumero);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0);
+            doc.text(numero, textoCentro, blocoY + alturaTexto * 2 + 2 + alturaNumero, { align: 'center', maxWidth: textoLargura });
+
         } else {
-            // Sem logo: centralizado em toda a largura
-            doc.setFontSize(7);
+            // Sem logo: tudo centralizado horizontalmente e verticalmente
+            const centroX = x + largura / 2;
+            const alturaTexto = fontSizeTexto * 1.2;
+            const alturaNumero = fontSizeNumero * 1.2;
+            const blocoH = alturaTexto * 2 + 2 + alturaNumero;
+            const blocoY = y + (altura - blocoH) / 2;
+
+            doc.setFontSize(fontSizeTexto);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(0);
-            doc.text(linha1, x + largura / 2, y + 5, { align: 'center' });
-            doc.text(linha2, x + largura / 2, y + 11, { align: 'center' });
+            doc.text(linha1, centroX, blocoY + alturaTexto, { align: 'center' });
+            doc.text(linha2, centroX, blocoY + alturaTexto * 2 + 2, { align: 'center' });
+
+            doc.setFontSize(fontSizeNumero);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0);
+            doc.text(numero, centroX, blocoY + alturaTexto * 2 + 2 + alturaNumero, { align: 'center' });
         }
     }
 
