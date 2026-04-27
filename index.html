@@ -75,7 +75,7 @@
     <div class="info-text">
         ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
         Layout: 3 cm altura × 10 cm largura (canhoto 5 cm + parte principal 5 cm).<br>
-        Logo no canto esquerdo, textos alinhados à direita.
+        Logo no canto esquerdo, textos <strong>centralizados</strong> na área restante.
     </div>
 </div>
 
@@ -210,28 +210,31 @@
     }
 
     /**
-     * Desenha o cabeçalho do ticket com logo no canto esquerdo e textos à direita.
-     * Se não houver imagem, centraliza apenas os textos.
+     * Desenha o cabeçalho do ticket:
+     * - Se houver logo: imagem no canto esquerdo; textos centralizados na área à direita.
+     * - Sem logo: textos centralizados em toda a largura.
      */
     function desenharCabecalho(doc, linha1, linha2, logoImg, x, y, largura, altura) {
         if (logoImg) {
-            // Logo no canto esquerdo, tamanho 10x10 mm
+            // Logo no canto esquerdo
             const logoSize = 10;
-            const logoX = x + 2; // margem esquerda de 2 mm
-            const logoY = y + 2; // margem superior de 2 mm
+            const logoX = x + 2;
+            const logoY = y + 2;
             doc.addImage(logoImg, 'PNG', logoX, logoY, logoSize, logoSize);
 
-            // Textos do evento à direita da logo
-            const textoX = logoX + logoSize + 2; // inicio da área de texto
-            const textoLargura = largura - logoSize - 6; // margens
+            // Área de texto à direita da logo
+            const textoX = logoX + logoSize + 2;      // margem esquerda após a logo
+            const textoLargura = largura - logoSize - 6; // margens laterais somadas (2+2+2)
+            const centroTexto = textoX + textoLargura / 2;
+
             doc.setFontSize(6);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(0);
-            // Alinhamento à esquerda dentro da área de texto
-            doc.text(linha1, textoX, y + 6, { align: 'left', maxWidth: textoLargura });
-            doc.text(linha2, textoX, y + 12, { align: 'left', maxWidth: textoLargura });
+            // Centralizado na área de texto
+            doc.text(linha1, centroTexto, y + 6, { align: 'center', maxWidth: textoLargura });
+            doc.text(linha2, centroTexto, y + 12, { align: 'center', maxWidth: textoLargura });
         } else {
-            // Sem logo: centraliza os textos
+            // Sem logo: centralizado em toda a largura
             doc.setFontSize(7);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(0);
