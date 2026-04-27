@@ -15,13 +15,15 @@
     .field { text-align: left; }
     .field label { font-size: 13px; font-weight: bold; color: #333; display: block; margin-bottom: 4px; }
     .field input { width: 130px; padding: 10px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; text-align: center; }
-    button { background: #0066cc; color: #fff; border: none; border-radius: 8px; padding: 14px 40px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    .field input[type="text"] { width: 180px; text-align: left; padding-left: 8px; }
+    button { background: #0066cc; color: #fff; border: none; border-radius: 8px; padding: 14px 40px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 16px; }
     button:disabled { background: #999; cursor: not-allowed; }
     .msg { margin-top: 16px; font-size: 13px; padding: 10px 16px; border-radius: 8px; }
     .msg.ok { background: #e8f5e9; color: #2e7d32; }
     .msg.erro { background: #ffebee; color: #c62828; }
     .msg.info { background: #f5f5f5; color: #555; }
     .info-text { font-size: 12px; color: #888; margin-top: 20px; }
+    .section-title { font-size: 14px; font-weight: bold; color: #333; margin: 16px 0 8px; }
   </style>
 </head>
 <body>
@@ -31,6 +33,19 @@
     <p class="sub">Secretaria Municipal de Esporte - Arapongas/PR</p>
     <p class="sub-small">Sorteio de Brindes</p>
 
+    <div class="section-title">Dados do Evento</div>
+    <div class="fields">
+      <div class="field">
+        <label>Nome do Evento</label>
+        <input type="text" id="eventoLinha1" value="TORNEIO" placeholder="Ex: TORNEIO">
+      </div>
+      <div class="field">
+        <label>Data / Descrição</label>
+        <input type="text" id="eventoLinha2" value="1º DE MAIO 2026" placeholder="Ex: 1º DE MAIO 2026">
+      </div>
+    </div>
+
+    <div class="section-title">Numeração</div>
     <div class="fields">
       <div class="field">
         <label>Nº Inicial</label>
@@ -42,13 +57,13 @@
       </div>
     </div>
 
-    <button id="gerarBtn" onclick="gerarPDF()">📄 Gerar PDF</button>
+    <button id="gerarBtn" onclick="gerarPDF()">📄 Gerar e Visualizar PDF</button>
     <div id="mensagem" class="msg info" style="display: none;"></div>
 
     <div class="info-text">
       ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
       Layout: 3 cm altura × 10 cm largura (canhoto 5 cm + parte principal 5 cm).<br>
-      <strong>Ambos os lados: "Nº 0001"</strong>. Marca d'água reforçada no canhoto.
+      Ambos os lados mostram "Nº 0001". Marca d'água antifraude.
     </div>
   </div>
 
@@ -60,9 +75,12 @@
       const msg = document.getElementById('mensagem');
       btn.disabled = true;
       msg.style.display = 'block';
-      msg.className = 'msg info';
+      msg.className = 'msg.info';
       msg.textContent = 'Gerando PDF...';
 
+      // Obtém valores dos campos editáveis
+      const eventoLinha1 = document.getElementById('eventoLinha1').value.trim() || 'EVENTO';
+      const eventoLinha2 = document.getElementById('eventoLinha2').value.trim() || 'DATA';
       const start = Math.max(1, Math.min(parseInt(document.getElementById('start').value) || 1, 15000));
       const end = Math.min(15000, Math.max(parseInt(document.getElementById('end').value) || 100, start));
       const maxPorLote = 2000;
@@ -70,21 +88,18 @@
 
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-      // Dimensões do ticket
-      const ticketHeight = 30;      // 3 cm
-      const ticketWidth = 100;      // 10 cm
-      const lado = 50;              // metade (5 cm)
-
-      const colunas = 2;            // 2 ingressos por linha
-      const linhas = 9;             // 9 linhas de 3 cm = 27 cm
-      const espacoColunas = 5;      // mm entre colunas
+      const ticketHeight = 30;
+      const ticketWidth = 100;
+      const lado = 50;
+      const colunas = 2;
+      const linhas = 9;
+      const espacoColunas = 5;
       const totalLargura = colunas * ticketWidth + (colunas - 1) * espacoColunas;
       const marginLeft = (210 - totalLargura) / 2;
       const marginTop = (297 - linhas * ticketHeight) / 2;
 
       let current = start;
       let firstPage = true;
-
       const watermarkText = 'SEC. ESPORTE ARAPONGAS/PR';
 
       try {
@@ -97,29 +112,22 @@
               const x = marginLeft + col * (ticketWidth + espacoColunas);
               const y = marginTop + row * ticketHeight;
               const numStr = String(current).padStart(4, '0');
-              const numeroFormatado = `Nº ${numStr}`; // formato unificado
+              const numeroFormatado = `Nº ${numStr}`;
 
-              // ---- CANHOTO (esquerda, 5 cm) ----
-              // Marca d'água reforçada
+              // ---- CANHOTO ----
               adicionarMarcaDagua(doc, watermarkText, x, y, lado, ticketHeight, 0.25, [140,140,140]);
-
-              // Borda
               doc.setDrawColor(204);
               doc.setLineWidth(0.1);
               doc.rect(x, y, lado, ticketHeight);
-
-              // Texto do torneio
               doc.setFontSize(7);
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(0);
-              doc.text('TORNEIO', x + lado / 2, y + 5, { align: 'center' });
-              doc.text('1º DE MAIO 2026', x + lado / 2, y + 11, { align: 'center' });
-
-              // Número unificado
+              doc.text(eventoLinha1, x + lado / 2, y + 5, { align: 'center' });
+              doc.text(eventoLinha2, x + lado / 2, y + 11, { align: 'center' });
               doc.setFontSize(11);
               doc.text(numeroFormatado, x + lado / 2, y + 24, { align: 'center' });
 
-              // ---- LINHA DE CORTE VERTICAL ----
+              // ---- LINHA DE CORTE ----
               const dashX = x + lado;
               doc.setDrawColor(0);
               doc.setLineWidth(0.2);
@@ -130,26 +138,20 @@
               doc.setTextColor(136);
               doc.text('✂', dashX - 2, y + 4, { align: 'center' });
 
-              // ---- PARTE PRINCIPAL (direita, 5 cm) ----
+              // ---- PARTE PRINCIPAL ----
               const px = x + lado + 0.5;
-              // Marca d'água suave
               adicionarMarcaDagua(doc, watermarkText, px, y, lado - 0.5, ticketHeight, 0.12, [180,180,180]);
-
               doc.setDrawColor(204);
               doc.setLineWidth(0.1);
               doc.rect(px, y, lado - 0.5, ticketHeight);
-
               doc.setFontSize(7);
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(0);
-              doc.text('TORNEIO', px + (lado - 0.5) / 2, y + 5, { align: 'center' });
-              doc.text('1º DE MAIO 2026', px + (lado - 0.5) / 2, y + 11, { align: 'center' });
-
-              // Número unificado (igual ao canhoto)
+              doc.text(eventoLinha1, px + (lado - 0.5) / 2, y + 5, { align: 'center' });
+              doc.text(eventoLinha2, px + (lado - 0.5) / 2, y + 11, { align: 'center' });
               doc.setFontSize(11);
               doc.text(numeroFormatado, px + (lado - 0.5) / 2, y + 24, { align: 'center' });
 
-              // ---- LINHA DE CORTE HORIZONTAL ----
               if (row < linhas - 1) {
                 doc.setDrawColor(170);
                 doc.setLineWidth(0.1);
@@ -163,12 +165,12 @@
           }
         }
 
-        const filename = `tickets-${String(start).padStart(4,'0')}-${String(adjustedEnd).padStart(4,'0')}.pdf`;
-        doc.save(filename);
+        const blobUrl = doc.output('bloburl');
+        window.open(blobUrl, '_blank');
 
         const paginas = Math.ceil((adjustedEnd - start + 1) / (linhas * colunas));
         msg.className = 'msg ok';
-        msg.textContent = `✅ PDF gerado! ${adjustedEnd - start + 1} ingressos em ${paginas} página(s).`;
+        msg.textContent = `✅ PDF gerado! ${adjustedEnd - start + 1} ingressos em ${paginas} página(s). Aberto para visualização.`;
       } catch (erro) {
         msg.className = 'msg erro';
         msg.textContent = '❌ Erro: ' + erro.message;
@@ -183,16 +185,13 @@
       doc.setTextColor(corRGB[0], corRGB[1], corRGB[2]);
       doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
-
       const centerX = x + largura / 2;
       const centerY = y + altura / 2;
-
       doc.text(texto, centerX, centerY, {
         align: 'center',
         angle: 30,
         renderingMode: 'fill'
       });
-
       doc.restoreGraphicsState();
     }
   </script>
