@@ -45,8 +45,9 @@
     <div id="mensagem" class="msg info" style="display: none;"></div>
 
     <p style="font-size: 12px; color: #888; margin-top: 24px;">
-      ⚠️ Lotes de até 2000 ingressos (tempo limite). Para toda a numeração, gere vários lotes.<br>
-      Layout: ticket 5 mm altura × 60 mm largura (canhoto 20 mm + principal 40 mm).
+      ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
+      Layout: 2,7 cm altura × 6 cm largura = 30 ingressos por folha A4 (10 linhas × 3 colunas).<br>
+      Apenas número e logomarca (sem textos).
     </p>
   </div>
 
@@ -68,75 +69,88 @@
 
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-      // Dimensões fixas conforme solicitado
-      const ticketWidth = 60;        // 6 cm
-      const ticketHeight = 5;        // 0,5 cm
-      const canhotoWidth = 20;       // 2 cm (dentro dos 6 cm totais)
-      const gap = 2;                 // espaço da linha de corte
-      const principalWidth = ticketWidth - canhotoWidth - gap;
+      // Dimensões fixas
+      const ticketHeight = 27;      // 2,7 cm (para caber 10 linhas em 27 cm)
+      const ticketWidth = 60;       // 6 cm
+      const canhotoWidth = 20;      // 2 cm (esquerda)
+      const gap = 2;               // linha de corte
+      const principalWidth = ticketWidth - canhotoWidth - gap; // 38 mm
 
-      // Margens para centralizar os 3 tickets na largura da página
-      const pageWidth = 210;
-      const pageHeight = 297;
       const colunas = 3;
-      const totalWidth = colunas * ticketWidth + (colunas - 1) * 1; // 1 mm de espaço entre colunas
-      const marginLeft = (pageWidth - totalWidth) / 2;
-      const marginTop = 2; // pequena margem superior
-
-      const linhas = Math.floor((pageHeight - marginTop * 2) / ticketHeight);
-      const ticketsPerPage = linhas * colunas;
+      const linhas = 10;            // 10 × 27 mm = 270 mm (cabe em A4)
+      const totalWidth = colunas * ticketWidth + (colunas - 1) * 2; // espaçamento entre colunas 2 mm
+      const marginLeft = (210 - totalWidth) / 2;   // centraliza horizontalmente
+      const marginTop = (297 - linhas * ticketHeight) / 2; // centraliza verticalmente
 
       let current = start;
-      let ticketIdx = 0;
       let firstPage = true;
 
       try {
+        // Carregar imagem da logo (opcional)
+        let logoImg = null;
+        try {
+          const resp = await fetch('logo.png');
+          if (resp.ok) {
+            const blob = await resp.blob();
+            logoImg = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.readAsDataURL(blob);
+            });
+          }
+        } catch (e) { /* sem imagem */ }
+
         while (current <= adjustedEnd) {
           if (!firstPage) doc.addPage();
           firstPage = false;
 
           for (let row = 0; row < linhas && current <= adjustedEnd; row++) {
             for (let col = 0; col < colunas && current <= adjustedEnd; col++) {
-              const x = marginLeft + col * (ticketWidth + 1);
+              const x = marginLeft + col * (ticketWidth + 2);
               const y = marginTop + row * ticketHeight;
               const numStr = String(current).padStart(4, '0');
 
-              // ---- CANHOTO ----
+              // ---- CANHOTO (esquerda) ----
               doc.setDrawColor(204);
               doc.setLineWidth(0.1);
               doc.rect(x, y, canhotoWidth, ticketHeight);
 
-              // Logo (selo simplificado)
-              desenharLogoMini(doc, x + 1, y + 1, 3); // quadrado de 3mm
+              // Logo / selo
+              desenharLogo(doc, logoImg, x + 2, y + 2, 6); // quadrado 6 mm
 
-              // Número do canhoto (apenas número)
-              doc.setFontSize(2.2);
+              // Número (apenas)
+              doc.setFontSize(5);
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(0);
-              doc.text(numStr, x + 5, y + 2.5, { align: 'left' });
+              doc.text(numStr, x + canhotoWidth / 2, y + ticketHeight - 5, { align: 'center' });
 
               // ---- LINHA DE CORTE VERTICAL ----
               const dashX = x + canhotoWidth + gap / 2;
               doc.setDrawColor(0);
-              doc.setLineWidth(0.1);
-              doc.setLineDash([0.6, 0.6], 0);
-              doc.line(dashX, y + 1, dashX, y + ticketHeight - 1);
+              doc.setLineWidth(0.2);
+              doc.setLineDash([1.5, 1.5], 0);
+              doc.line(dashX, y + 2, dashX, y + ticketHeight - 2);
               doc.setLineDash([]);
 
-              // ---- PARTE PRINCIPAL ----
+              // Tesoura
+              doc.setFontSize(3);
+              doc.setTextColor(136);
+              doc.text('✂', dashX - 2, y + 4, { align: 'center' });
+
+              // ---- PARTE PRINCIPAL (direita) ----
               const px = x + canhotoWidth + gap;
               doc.setDrawColor(204);
               doc.setLineWidth(0.1);
               doc.rect(px, y, principalWidth, ticketHeight);
 
-              // Logo (mesmo selo)
-              desenharLogoMini(doc, px + 1, y + 1, 3);
+              // Logo
+              desenharLogo(doc, logoImg, px + 3, y + 4, 8); // 8 mm
 
-              // Número do ticket (maior)
-              doc.setFontSize(2.5);
+              // Número do ticket
+              doc.setFontSize(6);
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(0);
-              doc.text(`Nº ${numStr}`, px + 5, y + 2.5, { align: 'left' });
+              doc.text(`Nº ${numStr}`, px + principalWidth / 2, y + ticketHeight - 7, { align: 'center' });
 
               current++;
             }
@@ -146,8 +160,9 @@
         const filename = `tickets-${String(start).padStart(4,'0')}-${String(adjustedEnd).padStart(4,'0')}.pdf`;
         doc.save(filename);
 
+        const paginas = Math.ceil((adjustedEnd - start + 1) / (linhas * colunas));
         msg.className = 'msg ok';
-        msg.textContent = `✅ PDF gerado! ${adjustedEnd - start + 1} ingressos em ${Math.ceil((adjustedEnd - start + 1) / ticketsPerPage)} página(s).`;
+        msg.textContent = `✅ PDF gerado! ${adjustedEnd - start + 1} ingressos em ${paginas} página(s).`;
       } catch (erro) {
         msg.className = 'msg erro';
         msg.textContent = '❌ Erro: ' + erro.message;
@@ -156,14 +171,18 @@
       }
     }
 
-    // Desenha um pequeno selo azul com a letra "A" (representa a identidade visual)
-    function desenharLogoMini(doc, x, y, size) {
-      doc.setFillColor(0, 51, 102);
-      doc.rect(x, y, size, size, 'F');
-      doc.setFontSize(size * 0.8);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(255, 255, 255);
-      doc.text('A', x + size/2, y + size/2 + size*0.25, { align: 'center' });
+    function desenharLogo(doc, img, x, y, size) {
+      if (img) {
+        doc.addImage(img, 'PNG', x, y, size, size);
+      } else {
+        // Selo azul com "A" de Arapongas
+        doc.setFillColor(0, 51, 102);
+        doc.rect(x, y, size, size, 'F');
+        doc.setFontSize(size * 0.6);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(255, 255, 255);
+        doc.text('A', x + size/2, y + size/2 + size*0.2, { align: 'center' });
+      }
     }
   </script>
 </body>
