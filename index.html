@@ -75,7 +75,7 @@
     <div class="info-text">
         ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
         Layout: 3 cm altura × 10 cm largura (canhoto 5 cm + parte principal 5 cm).<br>
-        Ambos os lados mostram "Nº 0001". Marca d'água antifraude.
+        Logo no canto esquerdo, textos alinhados à direita.
     </div>
 </div>
 
@@ -209,18 +209,31 @@
         }
     }
 
-    // Desenha a logo (se enviada) ou o texto do evento no topo do ticket
+    /**
+     * Desenha o cabeçalho do ticket com logo no canto esquerdo e textos à direita.
+     * Se não houver imagem, centraliza apenas os textos.
+     */
     function desenharCabecalho(doc, linha1, linha2, logoImg, x, y, largura, altura) {
         if (logoImg) {
-            // A imagem ocupa o topo (altura de 15 mm, centralizada)
-            const imgHeight = 15;
-            const imgWidth = 15; // mantemos proporção quadrada
-            const imgX = x + (largura - imgWidth) / 2;
-            const imgY = y + 1; // pequena margem superior
-            doc.addImage(logoImg, 'PNG', imgX, imgY, imgWidth, imgHeight);
+            // Logo no canto esquerdo, tamanho 10x10 mm
+            const logoSize = 10;
+            const logoX = x + 2; // margem esquerda de 2 mm
+            const logoY = y + 2; // margem superior de 2 mm
+            doc.addImage(logoImg, 'PNG', logoX, logoY, logoSize, logoSize);
+
+            // Textos do evento à direita da logo
+            const textoX = logoX + logoSize + 2; // inicio da área de texto
+            const textoLargura = largura - logoSize - 6; // margens
+            doc.setFontSize(6);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0);
+            // Alinhamento à esquerda dentro da área de texto
+            doc.text(linha1, textoX, y + 6, { align: 'left', maxWidth: textoLargura });
+            doc.text(linha2, textoX, y + 12, { align: 'left', maxWidth: textoLargura });
         } else {
-            // Fallback: texto do evento
-            doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+            // Sem logo: centraliza os textos
+            doc.setFontSize(7);
+            doc.setFont('helvetica', 'bold');
             doc.setTextColor(0);
             doc.text(linha1, x + largura / 2, y + 5, { align: 'center' });
             doc.text(linha2, x + largura / 2, y + 11, { align: 'center' });
