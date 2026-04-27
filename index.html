@@ -1,211 +1,221 @@
-import { NextResponse } from 'next/server';
-import PDFDocument from 'pdfkit';
-import fs from 'fs';
-import path from 'path';
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Tickets - Sorteio</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); max-width: 500px; width: 100%; text-align: center; }
+    h1 { font-size: 24px; margin-bottom: 6px; }
+    .sub { color: #666; margin: 0 0 4px; }
+    .sub-small { font-size: 13px; color: #888; font-style: italic; margin-bottom: 24px; }
+    .fields { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+    .field { text-align: left; }
+    .field label { font-size: 13px; font-weight: bold; color: #333; display: block; margin-bottom: 4px; }
+    .field input { width: 130px; padding: 10px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; text-align: center; }
+    button { background: #0066cc; color: #fff; border: none; border-radius: 8px; padding: 14px 40px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    button:disabled { background: #999; cursor: not-allowed; }
+    .msg { margin-top: 16px; font-size: 13px; padding: 10px 16px; border-radius: 8px; }
+    .msg.ok { background: #e8f5e9; color: #2e7d32; }
+    .msg.erro { background: #ffebee; color: #c62828; }
+    .msg.info { background: #f5f5f5; color: #555; }
+    code { background: #eee; padding: 2px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div style="font-size: 40px; margin-bottom: 12px;">🎫</div>
+    <h1>Gerador de Tickets para Sorteio</h1>
+    <p class="sub">Secretaria Municipal de Esporte - Arapongas/PR</p>
+    <p class="sub-small">Sorteio de Brindes</p>
 
-export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // Ajuste conforme seu plano Vercel
+    <div class="fields">
+      <div class="field">
+        <label>Nº Inicial</label>
+        <input type="number" id="start" min="1" max="15000" value="1">
+      </div>
+      <div class="field">
+        <label>Nº Final</label>
+        <input type="number" id="end" min="1" max="15000" value="100">
+      </div>
+    </div>
 
-export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const startParam = parseInt(searchParams.get('start') || '1');
-  const endParam = parseInt(searchParams.get('end') || '100');
+    <button id="gerarBtn" onclick="gerarPDF()">📄 Gerar PDF</button>
+    <div id="mensagem" class="msg info" style="display: none;"></div>
 
-  const from = Math.max(1, Math.min(startParam, 15000));
-  const to = Math.min(15000, Math.max(endParam, from));
+    <p style="font-size: 12px; color: #888; margin-top: 24px;">
+      ⚠️ Para evitar travamentos, recomenda-se lotes de até 2000 ingressos por vez.<br>
+      Substitua <code>logo.png</code> na raiz do projeto se quiser usar uma imagem real.
+    </p>
+  </div>
 
-  // Limite de segurança para não estourar timeout (plano Hobby ~10s)
-  const MAX_PER_REQUEST = 2500;
-  const adjustedTo = Math.min(to, from + MAX_PER_REQUEST - 1);
+  <script>
+    const { jsPDF } = window.jspdf;
 
-  // --- Carregar logo (se disponível) ---
-  let logoBuffer = null;
-  const logoPath = path.join(process.cwd(), 'public', 'logo.png');
-  try {
-    if (fs.existsSync(logoPath)) {
-      logoBuffer = fs.readFileSync(logoPath);
+    async function gerarPDF() {
+      const btn = document.getElementById('gerarBtn');
+      const msg = document.getElementById('mensagem');
+      btn.disabled = true;
+      msg.style.display = 'block';
+      msg.className = 'msg info';
+      msg.textContent = 'Gerando PDF...';
+
+      const start = Math.max(1, Math.min(parseInt(document.getElementById('start').value) || 1, 15000));
+      const end = Math.min(15000, Math.max(parseInt(document.getElementById('end').value) || 100, start));
+      const maxPorLote = 2000;
+      const adjustedEnd = Math.min(end, start + maxPorLote - 1);
+
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageWidth = 210;        // mm
+      const pageHeight = 297;       // mm
+      const marginLeft = 4.2;       // mm (≈12pt)
+      const marginTop = 5.3;        // mm (≈15pt)
+      const canhotoWidth = 38.7;    // mm (≈110pt)
+      const gap = 2.1;             // mm (≈6pt)
+      const principalWidth = pageWidth - marginLeft * 2 - canhotoWidth - gap;
+      const ticketHeight = 6.35;    // mm (≈18pt)
+      const ticketsPerPage = Math.floor((pageHeight - marginTop * 2) / ticketHeight);
+
+      let current = start;
+      let ticketIdx = 0;
+      let firstPage = true;
+
+      try {
+        // Tenta carregar imagem logo.png (se existir na mesma pasta)
+        let logoImg = null;
+        try {
+          const resp = await fetch('logo.png');
+          if (resp.ok) {
+            const blob = await resp.blob();
+            logoImg = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.readAsDataURL(blob);
+            });
+          }
+        } catch (e) { /* sem logo */ }
+
+        while (current <= adjustedEnd) {
+          if (!firstPage) doc.addPage();
+          firstPage = false;
+
+          for (let i = 0; i < ticketsPerPage && current <= adjustedEnd; i++, current++, ticketIdx++) {
+            const y = marginTop + i * ticketHeight;
+            const numStr = String(current).padStart(4, '0');
+
+            // ---- CANHOTO ----
+            const canhotoX = marginLeft;
+            // Retângulo
+            doc.setDrawColor(204);
+            doc.setLineWidth(0.1);
+            doc.rect(canhotoX, y, canhotoWidth, ticketHeight);
+
+            // Logo ou identidade visual
+            desenharLogo(doc, logoImg, canhotoX + 0.7, y + 0.35, 3.53); // ≈10pt
+
+            // Número
+            doc.setFontSize(7);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0);
+            doc.text(numStr, canhotoX + 4.5, y + 1.7, { align: 'left' });
+
+            // Texto resumido
+            doc.setFontSize(3.8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(51);
+            doc.text('Sec. Mun. Esporte - Arapongas/PR - Sorteio Brindes', canhotoX + 15, y + 2.1, { align: 'left' });
+
+            // ---- LINHA DE CORTE VERTICAL ----
+            const dashX = canhotoX + canhotoWidth + gap / 2;
+            doc.setDrawColor(0);
+            doc.setLineWidth(0.12);
+            doc.setLineDash([1, 1], 0);
+            doc.line(dashX, y + 0.5, dashX, y + ticketHeight - 0.5);
+            doc.setLineDash([]); // reset
+
+            // Tesoura
+            doc.setFontSize(5);
+            doc.setTextColor(136);
+            doc.text('✂', dashX - 2.1, y + 1.1, { align: 'center' });
+
+            // ---- PARTE PRINCIPAL ----
+            const principalX = canhotoX + canhotoWidth + gap;
+            doc.setDrawColor(204);
+            doc.setLineWidth(0.1);
+            doc.rect(principalX, y, principalWidth, ticketHeight);
+
+            // Logo maior
+            desenharLogo(doc, logoImg, principalX + 0.7, y + 0.5, 4.23); // ≈12pt
+
+            // Nº
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0);
+            doc.text(`Nº ${numStr}`, principalX + 5, y + 1.7, { align: 'left' });
+
+            // Texto completo
+            doc.setFontSize(4.5);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(0);
+            doc.text('Secretaria Municipal de Esporte - Arapongas/PR  |  Sorteio de Brindes', principalX + 24, y + 2.1, { align: 'left' });
+
+            // ---- LINHA DE CORTE HORIZONTAL ----
+            if (i < ticketsPerPage - 1 && current < adjustedEnd) {
+              doc.setDrawColor(170);
+              doc.setLineWidth(0.1);
+              doc.setLineDash([0.8, 0.8], 0);
+              doc.line(marginLeft, y + ticketHeight, marginLeft + pageWidth - marginLeft * 2, y + ticketHeight);
+              doc.setLineDash([]);
+            }
+          }
+        }
+
+        // Salvar PDF
+        const filename = `tickets-${String(start).padStart(4,'0')}-${String(adjustedEnd).padStart(4,'0')}.pdf`;
+        doc.save(filename);
+
+        msg.className = 'msg ok';
+        msg.textContent = `✅ PDF gerado com sucesso! (${adjustedEnd - start + 1} ingressos)`;
+      } catch (erro) {
+        msg.className = 'msg erro';
+        msg.textContent = '❌ Erro: ' + erro.message;
+      } finally {
+        btn.disabled = false;
+      }
     }
-  } catch {
-    // placeholder será desenhado com a identidade visual textual
-  }
 
-  // --- Criar documento PDF ---
-  const doc = new PDFDocument({
-    size: 'A4',
-    margins: { top: 15, bottom: 15, left: 12, right: 12 },
-    info: {
-      Title: 'Tickets Sorteio - Secretaria Municipal de Esporte - Arapongas/PR',
-      Author: 'Secretaria Municipal de Esporte',
-    },
-  });
-
-  const chunks = [];
-  doc.on('data', (chunk) => chunks.push(chunk));
-  const pdfPromise = new Promise((resolve) => {
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-  });
-
-  // ========== LAYOUT COMPACTO (máximo de ingressos por página) ==========
-  const pageWidth = 595.28 - 24;   // A4 largura menos margens laterais
-  const pageHeight = 841.89 - 30;  // A4 altura menos margens verticais
-  const canhotoWidth = 110;
-  const gapWidth = 6;              // espaço da linha de corte
-  const principalWidth = pageWidth - canhotoWidth - gapWidth;
-  const ticketHeight = 18;         // 18 pt = ~6.35 mm (44 tickets por página)
-  const ticketsPerPage = Math.floor(pageHeight / ticketHeight);
-
-  const marginLeft = 12;
-  const marginTop = 15;
-
-  let currentNum = from;
-  let ticketIndex = 0;
-
-  while (currentNum <= adjustedTo) {
-    // Nova página quando a atual estiver cheia
-    if (ticketIndex % ticketsPerPage === 0 && currentNum !== from) {
-      doc.addPage();
+    function desenharLogo(doc, img, x, y, sizeMM) {
+      if (img) {
+        doc.addImage(img, 'PNG', x, y, sizeMM, sizeMM);
+      } else {
+        // Desenho vetorial da logomarca textual
+        const s = sizeMM;
+        // Fundo azul
+        doc.setFillColor(0, 51, 102);
+        doc.rect(x, y, s, s, 'F');
+        // Faixa branca superior (30%)
+        doc.setFillColor(255, 255, 255);
+        doc.rect(x, y, s, s * 0.3, 'F');
+        // Texto "PREFEITURA DE"
+        doc.setFontSize(s * 2.5); // proporcional
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 51, 102);
+        doc.text('PREFEITURA DE', x + s/2, y + s*0.12, { align: 'center' });
+        // "ARAPONGAS"
+        doc.setFontSize(s * 3.5);
+        doc.text('ARAPONGAS', x + s/2, y + s*0.26, { align: 'center' });
+        // Linha amarela
+        doc.setFillColor(255, 204, 0);
+        doc.rect(x, y + s*0.4, s, s*0.08, 'F');
+        // Slogan
+        doc.setFontSize(s * 2);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(255, 255, 255);
+        doc.text('NOSSA CIDADE, NOSSO COMPROMISSO.', x + s/2, y + s*0.57, { align: 'center' });
+      }
     }
-
-    const positionOnPage = ticketIndex % ticketsPerPage;
-    const y = marginTop + positionOnPage * ticketHeight;
-    const numberStr = String(currentNum).padStart(4, '0');
-
-    // ---------- CANHOTO (esquerda) ----------
-    const canhotoX = marginLeft;
-
-    // Retângulo leve do canhoto
-    doc.rect(canhotoX, y, canhotoWidth, ticketHeight).lineWidth(0.2).stroke('#cccccc');
-
-    // Logo (pequena) - agora com identidade visual textual ou imagem
-    const logoSizeC = 10;
-    const logoYC = y + (ticketHeight - logoSizeC) / 2;
-    drawLogo(doc, logoBuffer, canhotoX + 2, logoYC, logoSizeC);
-
-    // Número do canhoto
-    doc.fontSize(7).font('Helvetica-Bold').fillColor('#000000');
-    doc.text(numberStr, canhotoX + logoSizeC + 4, y + 2, {
-      width: 30,
-      align: 'left',
-    });
-
-    // Informações abreviadas no canhoto (uma linha)
-    doc.fontSize(3.8).font('Helvetica').fillColor('#333333');
-    doc.text('Sec. Mun. Esporte - Arapongas/PR - Sorteio Brindes', canhotoX + logoSizeC + 36, y + 3, {
-      width: canhotoWidth - logoSizeC - 38,
-      align: 'left',
-    });
-
-    // ---------- LINHA DE CORTE VERTICAL (tracejada) ----------
-    const dashX = canhotoX + canhotoWidth + gapWidth / 2;
-    doc.save();
-    doc.moveTo(dashX, y + 1).lineTo(dashX, y + ticketHeight - 1);
-    doc.lineWidth(0.3).dash(2, { space: 2 }).stroke('#000000');
-    doc.restore();
-
-    // Ícone de tesoura
-    doc.fontSize(5).fillColor('#888888').text('✂', dashX - 6, y + 1, { width: 12, align: 'center' });
-
-    // ---------- PARTE PRINCIPAL (direita) ----------
-    const principalX = canhotoX + canhotoWidth + gapWidth;
-
-    // Retângulo da parte principal
-    doc.rect(principalX, y, principalWidth, ticketHeight).lineWidth(0.2).stroke('#cccccc');
-
-    // Logo (um pouco maior)
-    const logoSizeP = 12;
-    const logoYP = y + (ticketHeight - logoSizeP) / 2;
-    drawLogo(doc, logoBuffer, principalX + 2, logoYP, logoSizeP);
-
-    // Número do ticket
-    doc.fontSize(8).font('Helvetica-Bold').fillColor('#000000');
-    doc.text(`Nº ${numberStr}`, principalX + logoSizeP + 4, y + 1, {
-      width: 60,
-      align: 'left',
-    });
-
-    // Texto completo na parte principal (uma linha)
-    doc.fontSize(4.5).font('Helvetica').fillColor('#000000');
-    doc.text('Secretaria Municipal de Esporte - Arapongas/PR  |  Sorteio de Brindes', principalX + logoSizeP + 64, y + 2, {
-      width: principalWidth - logoSizeP - 68,
-      align: 'left',
-    });
-
-    // ---------- LINHA DE CORTE HORIZONTAL (entre tickets) ----------
-    if (positionOnPage < ticketsPerPage - 1 && currentNum < adjustedTo) {
-      const lineY = y + ticketHeight;
-      doc.save();
-      doc.moveTo(marginLeft, lineY).lineTo(marginLeft + pageWidth, lineY);
-      doc.lineWidth(0.2).dash(2, { space: 2 }).stroke('#aaaaaa');
-      doc.restore();
-    }
-
-    currentNum++;
-    ticketIndex++;
-  }
-
-  doc.end();
-  const pdfBuffer = await pdfPromise;
-
-  const filename = `tickets-${String(from).padStart(4, '0')}-${String(adjustedTo).padStart(4, '0')}.pdf`;
-
-  return new NextResponse(pdfBuffer, {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-      'Content-Length': pdfBuffer.length.toString(),
-    },
-  });
-}
-
-/**
- * Desenha a logo.
- * Se houver imagem em public/logo.png, usa a imagem.
- * Caso contrário, desenha a identidade visual textual:
- *   PREFEITURA DE
- *   ARAPONGAS
- *   NOSSA CIDADE, NOSSO COMPROMISSO.
- */
-function drawLogo(doc, logoBuffer, x, y, size) {
-  if (logoBuffer) {
-    // Se houver imagem real, usa a imagem
-    doc.image(logoBuffer, x, y, { width: size, height: size });
-  } else {
-    // Desenha a inscrição oficial no estilo de logo
-    const boxWidth = size;
-    const boxHeight = size;
-
-    // Fundo azul escuro
-    doc.save();
-    doc.rect(x, y, boxWidth, boxHeight).fill('#003366');
-
-    // Faixa branca superior
-    doc.rect(x, y, boxWidth, boxHeight * 0.3).fill('#ffffff');
-
-    // Texto "PREFEITURA DE" (azul)
-    doc.fontSize(boxHeight * 0.17).font('Helvetica-Bold').fillColor('#003366');
-    doc.text('PREFEITURA DE', x, y + boxHeight * 0.02, {
-      width: boxWidth,
-      align: 'center',
-    });
-
-    // "ARAPONGAS" em destaque (azul)
-    doc.fontSize(boxHeight * 0.28).font('Helvetica-Bold').fillColor('#003366');
-    doc.text('ARAPONGAS', x, y + boxHeight * 0.14, {
-      width: boxWidth,
-      align: 'center',
-    });
-
-    // Faixa dourada/amarela
-    doc.rect(x, y + boxHeight * 0.4, boxWidth, boxHeight * 0.08).fill('#ffcc00');
-
-    // Slogan (branco sobre fundo escuro)
-    doc.fontSize(boxHeight * 0.14).font('Helvetica').fillColor('#ffffff');
-    doc.text('NOSSA CIDADE, NOSSO COMPROMISSO.', x, y + boxHeight * 0.52, {
-      width: boxWidth,
-      align: 'center',
-    });
-
-    doc.restore();
-  }
-}
+  </script>
+</body>
+</html>
