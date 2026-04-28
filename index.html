@@ -3,20 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Tickets - Sorteio</title>
+    <title>Gerador de Tickets e Convites</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); max-width: 500px; width: 100%; text-align: center; }
+        .card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); max-width: 520px; width: 100%; text-align: center; }
         h1 { font-size: 22px; margin-bottom: 6px; }
         .sub { color: #666; margin: 0 0 4px; }
         .sub-small { font-size: 13px; color: #888; font-style: italic; margin-bottom: 20px; }
-        .fields { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .section { margin: 16px 0 8px; font-weight: bold; font-size: 14px; color: #333; }
+        .fields { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
         .field { text-align: left; }
         .field label { font-size: 13px; font-weight: bold; color: #333; display: block; margin-bottom: 4px; }
-        .field input { padding: 10px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; }
-        .field input[type="text"] { width: 180px; }
+        .field input, .field select { padding: 10px; font-size: 14px; border: 2px solid #ddd; border-radius: 8px; }
+        .field input[type="text"] { width: 200px; }
         .field input[type="number"] { width: 130px; text-align: center; }
+        .field select { width: 220px; }
         .file-upload { margin: 10px 0; }
         .file-upload label { display: block; margin-bottom: 4px; font-weight: bold; }
         #preview { max-width: 80px; margin-top: 8px; border: 1px solid #ccc; border-radius: 6px; display: none; }
@@ -27,45 +29,77 @@
         .msg.erro { background: #ffebee; color: #c62828; }
         .msg.info { background: #f5f5f5; color: #555; }
         .info-text { font-size: 12px; color: #888; margin-top: 20px; }
-        .section-title { font-size: 14px; font-weight: bold; color: #333; margin: 16px 0 8px; }
+        hr { margin: 16px 0; border: 0; border-top: 1px solid #eee; }
     </style>
 </head>
 <body>
 <div class="card">
     <div style="font-size: 40px; margin-bottom: 12px;">🎫</div>
-    <h1>Gerador de Tickets para Sorteio</h1>
+    <h1>Gerador de Tickets e Convites</h1>
     <p class="sub">Secretaria Municipal de Esporte - Arapongas/PR</p>
-    <p class="sub-small">Sorteio de Brindes</p>
+    <p class="sub-small">Sorteio de Brindes / Eventos</p>
 
-    <div class="section-title">Dados do Evento</div>
+    <!-- MODO DE USO -->
+    <div class="section">Modo</div>
     <div class="fields">
         <div class="field">
-            <label>Nome do Evento</label>
-            <input type="text" id="eventoLinha1" value="TORNEIO 1º DE MAIO" placeholder="Ex: TORNEIO">
-        </div>
-        <div class="field">
-            <label>Data / Descrição</label>
-            <input type="text" id="eventoLinha2" value="2026" placeholder="Ex: 2026">
+            <label>Tipo de ingresso</label>
+            <select id="modo" onchange="alternarModo()">
+                <option value="sorteio">🎟️ Sorteio (com canhoto e numeração)</option>
+                <option value="convite">🎵 Convite / Show (sem canhoto)</option>
+            </select>
         </div>
     </div>
 
-    <div class="section-title">Logomarca (opcional)</div>
+    <!-- LOGO -->
+    <div class="section">Logomarca (opcional)</div>
     <div class="file-upload">
-        <label for="logoInput">📁 Escolher imagem da logo</label>
+        <label for="logoInput">📁 Escolher imagem</label>
         <input type="file" id="logoInput" accept="image/*" style="font-size: 14px;">
         <br>
         <img id="preview" alt="Pré-visualização da logo">
     </div>
 
-    <div class="section-title">Numeração</div>
+    <!-- TEXTOS DO EVENTO -->
+    <div class="section">Textos do Ingresso</div>
     <div class="fields">
         <div class="field">
-            <label>Nº Inicial</label>
-            <input type="number" id="start" min="1" max="15000" value="1">
+            <label>Linha 1</label>
+            <input type="text" id="eventoLinha1" value="TORNEIO 1º DE MAIO" placeholder="Ex: SHOW NACIONAL">
         </div>
         <div class="field">
-            <label>Nº Final</label>
-            <input type="number" id="end" min="1" max="15000" value="100">
+            <label>Linha 2</label>
+            <input type="text" id="eventoLinha2" value="2026" placeholder="Ex: ARTISTA XYZ">
+        </div>
+    </div>
+    <div class="fields">
+        <div class="field">
+            <label>Linha 3 (opcional)</label>
+            <input type="text" id="eventoLinha3" value="" placeholder="Ex: 20h - Ginásio Municipal">
+        </div>
+    </div>
+
+    <!-- MARCA D'ÁGUA -->
+    <div class="section">Marca d'água</div>
+    <div class="fields">
+        <div class="field">
+            <label>Texto da marca d'água</label>
+            <input type="text" id="marcaDagua" value="SEC. ESPORTE ARAPONGAS/PR" placeholder="Sua frase de segurança">
+        </div>
+    </div>
+
+    <!-- NUMERAÇÃO (SORTEIO) -->
+    <div id="secaoNumeracao">
+        <div class="section">Numeração (apenas Sorteio)</div>
+        <div class="fields">
+            <div class="field">
+                <label>Nº Inicial</label>
+                <input type="number" id="start" min="1" max="15000" value="1">
+            </div>
+            <div class="field">
+                <label>Nº Final</label>
+                <input type="number" id="end" min="1" max="15000" value="100">
+            </div>
         </div>
     </div>
 
@@ -74,20 +108,21 @@
 
     <div class="info-text">
         ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
-        Layout: 3 cm altura × 10 cm largura (canhoto 5 cm + parte principal 5 cm).<br>
-        Formatação idêntica em ambos os lados. Números alinhados uniformemente.
+        Layout automático: Sorteio (canhoto + principal) / Convite (inteiro).<br>
+        Marca d'água e logo personalizáveis.
     </div>
 </div>
 
 <script>
     const { jsPDF } = window.jspdf;
 
+    // Preview da logo
     document.getElementById('logoInput').addEventListener('change', function (e) {
         const file = e.target.files[0];
         const preview = document.getElementById('preview');
         if (file) {
             const reader = new FileReader();
-            reader.onload = function (ev) {
+            reader.onload = ev => {
                 preview.src = ev.target.result;
                 preview.style.display = 'block';
             };
@@ -97,6 +132,13 @@
         }
     });
 
+    // Mostrar/ocultar numeração conforme modo
+    function alternarModo() {
+        const modo = document.getElementById('modo').value;
+        document.getElementById('secaoNumeracao').style.display = (modo === 'sorteio') ? 'block' : 'none';
+    }
+    alternarModo(); // inicial
+
     async function gerarPDF() {
         const btn = document.getElementById('gerarBtn');
         const msg = document.getElementById('mensagem');
@@ -105,18 +147,23 @@
         msg.className = 'msg.info';
         msg.textContent = 'Gerando PDF...';
 
-        const eventoLinha1 = document.getElementById('eventoLinha1').value.trim() || 'EVENTO';
-        const eventoLinha2 = document.getElementById('eventoLinha2').value.trim() || 'DATA';
-        const start = Math.max(1, Math.min(parseInt(document.getElementById('start').value) || 1, 15000));
-        const end = Math.min(15000, Math.max(parseInt(document.getElementById('end').value) || 100, start));
+        // Ler campos
+        const modo = document.getElementById('modo').value;
+        const e1 = document.getElementById('eventoLinha1').value.trim() || 'EVENTO';
+        const e2 = document.getElementById('eventoLinha2').value.trim() || '';
+        const e3 = document.getElementById('eventoLinha3').value.trim() || '';
+        const watermark = document.getElementById('marcaDagua').value.trim() || 'MARCA D\'AGUA';
+        const start = parseInt(document.getElementById('start').value) || 1;
+        const end = parseInt(document.getElementById('end').value) || 100;
         const maxPorLote = 2000;
-        const adjustedEnd = Math.min(end, start + maxPorLote - 1);
+        const adjustedEnd = (modo === 'sorteio') ? Math.min(end, start + maxPorLote - 1) : start; // convite não usa range
 
+        // Carregar logo
         let logoImg = null;
         const fileInput = document.getElementById('logoInput');
         if (fileInput.files.length > 0) {
             const file = fileInput.files[0];
-            logoImg = await new Promise((resolve) => {
+            logoImg = await new Promise(resolve => {
                 const reader = new FileReader();
                 reader.onload = () => resolve(reader.result);
                 reader.readAsDataURL(file);
@@ -124,10 +171,9 @@
         }
 
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
         const ticketHeight = 30;
         const ticketWidth = 100;
-        const lado = 50;            // metade exata (5 cm)
+        const lado = 50; // metade para sorteio
         const colunas = 2;
         const linhas = 9;
         const espacoColunas = 5;
@@ -135,69 +181,82 @@
         const marginLeft = (210 - totalLargura) / 2;
         const marginTop = (297 - linhas * ticketHeight) / 2;
 
-        let current = start;
-        let firstPage = true;
-        const watermarkText = 'SEC. ESPORTE ARAPONGAS/PR';
         const opacidadeMarca = 0.25;
         const corMarca = [140, 140, 140];
+        const fontSizeTexto = 7;
+        const fontSizeNumero = 11;
+        const margemInferior = 5;
 
-        // Fontes
-        const fontSizeTexto = 7;    // ~20pt
-        const fontSizeNumero = 11;  // ~31pt
-        const margemInferior = 5;   // distância fixa da base para o número
+        let current = (modo === 'sorteio') ? start : 1;
+        let firstPage = true;
 
         try {
-            while (current <= adjustedEnd) {
+            while ((modo === 'sorteio' && current <= adjustedEnd) || (modo === 'convite' && current <= 1)) {
                 if (!firstPage) doc.addPage();
                 firstPage = false;
 
-                for (let row = 0; row < linhas && current <= adjustedEnd; row++) {
-                    for (let col = 0; col < colunas && current <= adjustedEnd; col++) {
+                for (let row = 0; row < linhas; row++) {
+                    for (let col = 0; col < colunas; col++) {
+                        if (modo === 'sorteio' && current > adjustedEnd) break;
+                        if (modo === 'convite' && current > 1) break;
+
                         const x = marginLeft + col * (ticketWidth + espacoColunas);
                         const y = marginTop + row * ticketHeight;
-                        const numStr = String(current).padStart(4, '0');
-                        const numeroFormatado = `N\u00BA ${numStr}`; // Nº
+                        const numStr = (modo === 'sorteio') ? String(current).padStart(4, '0') : '';
+                        const numeroFormatado = (modo === 'sorteio') ? `N\u00BA ${numStr}` : '';
 
-                        // --- CANHOTO ---
-                        adicionarMarcaDagua(doc, watermarkText, x, y, lado, ticketHeight, opacidadeMarca, corMarca);
-                        doc.setDrawColor(204); doc.setLineWidth(0.1);
-                        doc.rect(x, y, lado, ticketHeight);
-                        // largura efetiva = lado (50 mm)
-                        desenharConteudo(doc, x, y, lado, ticketHeight, eventoLinha1, eventoLinha2, numeroFormatado, logoImg, fontSizeTexto, fontSizeNumero, margemInferior);
+                        // Marca d'água
+                        adicionarMarcaDagua(doc, watermark, x, y, ticketWidth, ticketHeight, opacidadeMarca, corMarca);
 
-                        // --- LINHA DE CORTE ---
-                        const dashX = x + lado;
-                        doc.setDrawColor(0); doc.setLineWidth(0.2);
-                        doc.setLineDash([1.5, 1.5]); doc.line(dashX, y + 2, dashX, y + ticketHeight - 2);
-                        doc.setLineDash([]);
-                        doc.setFontSize(4); doc.setTextColor(136);
-                        doc.text('✂', dashX - 2, y + 4, { align: 'center' });
+                        if (modo === 'sorteio') {
+                            // ---- SORTEIO: CANHOTO + PRINCIPAL ----
+                            // Canhoto
+                            doc.setDrawColor(204); doc.setLineWidth(0.1);
+                            doc.rect(x, y, lado, ticketHeight);
+                            desenharConteudo(doc, x, y, lado, ticketHeight, e1, e2, e3, numeroFormatado, logoImg, fontSizeTexto, fontSizeNumero, margemInferior, 'sorteio');
 
-                        // --- PARTE PRINCIPAL ---
-                        const px = x + lado + 0.5; // folga para linha de corte
-                        adicionarMarcaDagua(doc, watermarkText, px, y, lado - 0.5, ticketHeight, opacidadeMarca, corMarca);
-                        doc.setDrawColor(204); doc.setLineWidth(0.1);
-                        doc.rect(px, y, lado - 0.5, ticketHeight);
-                        // IMPORTANTE: usar a mesma largura efetiva (lado) para centralizar o texto, ignorando a folga do retângulo
-                        desenharConteudo(doc, px, y, lado, ticketHeight, eventoLinha1, eventoLinha2, numeroFormatado, logoImg, fontSizeTexto, fontSizeNumero, margemInferior);
+                            // Linha de corte
+                            const dashX = x + lado;
+                            doc.setDrawColor(0); doc.setLineWidth(0.2);
+                            doc.setLineDash([1.5, 1.5]); doc.line(dashX, y + 2, dashX, y + ticketHeight - 2);
+                            doc.setLineDash([]);
+                            doc.setFontSize(4); doc.setTextColor(136);
+                            doc.text('✂', dashX - 2, y + 4, { align: 'center' });
 
-                        // --- LINHA HORIZONTAL ---
+                            // Principal
+                            const px = x + lado + 0.5;
+                            doc.setDrawColor(204); doc.setLineWidth(0.1);
+                            doc.rect(px, y, lado - 0.5, ticketHeight);
+                            desenharConteudo(doc, px, y, lado, ticketHeight, e1, e2, e3, numeroFormatado, logoImg, fontSizeTexto, fontSizeNumero, margemInferior, 'sorteio');
+                        } else {
+                            // ---- CONVITE: INTEIRO, SEM CANHOTO ----
+                            doc.setDrawColor(204); doc.setLineWidth(0.1);
+                            doc.rect(x, y, ticketWidth, ticketHeight);
+                            desenharConteudo(doc, x, y, ticketWidth, ticketHeight, e1, e2, e3, '', logoImg, fontSizeTexto, fontSizeNumero, margemInferior, 'convite');
+                        }
+
+                        // Linha horizontal entre ingressos
                         if (row < linhas - 1) {
                             doc.setDrawColor(170); doc.setLineWidth(0.1);
-                            doc.setLineDash([0.8, 0.8]); doc.line(x, y + ticketHeight, x + ticketWidth, y + ticketHeight);
+                            doc.setLineDash([0.8, 0.8]);
+                            doc.line(x, y + ticketHeight, x + ticketWidth, y + ticketHeight);
                             doc.setLineDash([]);
                         }
-                        current++;
+
+                        if (modo === 'sorteio') current++;
+                        else current++; // sai do loop
                     }
                 }
+                if (modo === 'convite') break; // apenas uma página de convites
             }
 
             const blobUrl = doc.output('bloburl');
             window.open(blobUrl, '_blank');
 
-            const paginas = Math.ceil((adjustedEnd - start + 1) / (linhas * colunas));
+            const total = (modo === 'sorteio') ? (adjustedEnd - start + 1) : 18;
+            const paginas = Math.ceil(total / 18);
             msg.className = 'msg.ok';
-            msg.textContent = `✅ PDF gerado! ${adjustedEnd - start + 1} ingressos em ${paginas} página(s).`;
+            msg.textContent = `✅ PDF gerado! ${total} ingresso(s) em ${paginas} página(s). Aberto para visualização.`;
         } catch (erro) {
             msg.className = 'msg.erro';
             msg.textContent = '❌ Erro: ' + erro.message;
@@ -206,14 +265,9 @@
         }
     }
 
-    /**
-     * Desenha conteúdo centralizado usando larguraTotal (mm) como referência.
-     * - Número sempre na posição Y fixa (base - margemInferior).
-     * - Texto do evento centralizado verticalmente no espaço acima.
-     * - Logo à esquerda, centralizada verticalmente em toda a altura.
-     */
-    function desenharConteudo(doc, x, y, larguraTotal, altura, linha1, linha2, numero, logoImg, fontSizeTexto, fontSizeNumero, margemInf) {
+    function desenharConteudo(doc, x, y, larguraTotal, altura, linha1, linha2, linha3, numero, logoImg, fontSizeTexto, fontSizeNumero, margemInf, tipo) {
         const numeroY = y + altura - margemInf;
+        const temNumero = (tipo === 'sorteio' && numero !== '');
 
         if (logoImg) {
             const logoSize = 12;
@@ -221,41 +275,68 @@
             const logoY = y + (altura - logoSize) / 2;
             doc.addImage(logoImg, 'PNG', logoX, logoY, logoSize, logoSize);
 
-            // Área de texto começa após a logo
             const textoX = logoX + logoSize + 2;
-            const textoLargura = larguraTotal - logoSize - 6; // margens laterais (2+2+2)
+            const textoLargura = larguraTotal - logoSize - 6;
             const textoCentro = textoX + textoLargura / 2;
 
             const alturaLinha = fontSizeTexto * 1.2;
-            const alturaBlocoTexto = alturaLinha * 2 + 1;
-            const espacoDisponivel = numeroY - y - fontSizeNumero * 0.5;
+            let linhasTexto = [linha1];
+            if (linha2) linhasTexto.push(linha2);
+            if (linha3) linhasTexto.push(linha3);
+            const numLinhas = linhasTexto.length;
+            const alturaBlocoTexto = alturaLinha * numLinhas + (numLinhas - 1) * 1;
+
+            let espacoDisponivel;
+            if (temNumero) {
+                espacoDisponivel = numeroY - y - fontSizeNumero * 0.5;
+            } else {
+                espacoDisponivel = numeroY - y + fontSizeNumero; // usa mais espaço
+            }
+
             const textoY = y + (espacoDisponivel - alturaBlocoTexto) / 2 + alturaLinha;
 
             doc.setFontSize(fontSizeTexto);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(0);
-            doc.text(linha1, textoCentro, textoY, { align: 'center', maxWidth: textoLargura });
-            doc.text(linha2, textoCentro, textoY + alturaLinha + 1, { align: 'center', maxWidth: textoLargura });
+            linhasTexto.forEach((linha, i) => {
+                doc.text(linha, textoCentro, textoY + i * (alturaLinha + 1), { align: 'center', maxWidth: textoLargura });
+            });
 
-            doc.setFontSize(fontSizeNumero);
-            doc.setFont('helvetica', 'bold');
-            doc.text(numero, textoCentro, numeroY, { align: 'center', maxWidth: textoLargura });
+            if (temNumero) {
+                doc.setFontSize(fontSizeNumero);
+                doc.setFont('helvetica', 'bold');
+                doc.text(numero, textoCentro, numeroY, { align: 'center', maxWidth: textoLargura });
+            }
         } else {
             const centroX = x + larguraTotal / 2;
             const alturaLinha = fontSizeTexto * 1.2;
-            const alturaBlocoTexto = alturaLinha * 2 + 1;
-            const espacoDisponivel = numeroY - y - fontSizeNumero * 0.5;
+            let linhasTexto = [linha1];
+            if (linha2) linhasTexto.push(linha2);
+            if (linha3) linhasTexto.push(linha3);
+            const numLinhas = linhasTexto.length;
+            const alturaBlocoTexto = alturaLinha * numLinhas + (numLinhas - 1) * 1;
+
+            let espacoDisponivel;
+            if (temNumero) {
+                espacoDisponivel = numeroY - y - fontSizeNumero * 0.5;
+            } else {
+                espacoDisponivel = numeroY - y + fontSizeNumero;
+            }
+
             const textoY = y + (espacoDisponivel - alturaBlocoTexto) / 2 + alturaLinha;
 
             doc.setFontSize(fontSizeTexto);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(0);
-            doc.text(linha1, centroX, textoY, { align: 'center' });
-            doc.text(linha2, centroX, textoY + alturaLinha + 1, { align: 'center' });
+            linhasTexto.forEach((linha, i) => {
+                doc.text(linha, centroX, textoY + i * (alturaLinha + 1), { align: 'center' });
+            });
 
-            doc.setFontSize(fontSizeNumero);
-            doc.setFont('helvetica', 'bold');
-            doc.text(numero, centroX, numeroY, { align: 'center' });
+            if (temNumero) {
+                doc.setFontSize(fontSizeNumero);
+                doc.setFont('helvetica', 'bold');
+                doc.text(numero, centroX, numeroY, { align: 'center' });
+            }
         }
     }
 
