@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador Universal de Ingressos</title>
+    <title>Gerador Universal de Ingressos e Rifas</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f5f5f5; display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); max-width: 520px; width: 100%; text-align: center; }
+        .card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); max-width: 580px; width: 100%; text-align: center; }
         h1 { font-size: 22px; margin-bottom: 6px; }
         .sub { color: #666; font-size: 14px; margin: 4px 0; }
         .section { margin: 16px 0 8px; font-weight: bold; font-size: 14px; }
@@ -27,29 +27,50 @@
         .msg.info { background: #f5f5f5; color: #555; }
         .info-text { font-size: 12px; color: #888; margin-top: 20px; }
         .range-wrap { display: flex; align-items: center; gap: 5px; }
+        hr { border: 0; border-top: 1px solid #eee; margin: 12px 0; }
+        textarea { width: 200px; height: 50px; padding: 8px; font-size: 13px; border: 2px solid #ddd; border-radius: 8px; resize: vertical; }
     </style>
 </head>
 <body>
 <div class="card">
     <div style="font-size: 40px;">🎫</div>
-    <h1>Gerador Universal de Ingressos</h1>
+    <h1>Gerador Universal de Ingressos e Rifas</h1>
     <p class="sub">Secretaria Municipal de Esporte - Arapongas/PR</p>
-    <p class="sub">Sorteio de Brindes / Eventos</p>
+    <p class="sub">Sorteios / Eventos / Ação entre Amigos</p>
 
     <div class="section">Modo</div>
     <select id="modo" onchange="alternarModo()">
         <option value="sorteio">🎟️ Sorteio (canhoto + numeração)</option>
         <option value="convite">🎵 Convite / Show (sem canhoto)</option>
+        <option value="rifa">🧾 Rifa (Ação entre Amigos)</option>
     </select>
 
     <div class="section">Logo (opcional)</div>
     <input type="file" id="logoInput" accept="image/*"><br>
     <img id="preview" alt="Pré-visualização">
 
-    <div class="section">Textos do Ingresso</div>
-    <input type="text" id="linha1" value="TORNEIO 1º DE MAIO" placeholder="Linha 1"><br><br>
-    <input type="text" id="linha2" value="2026" placeholder="Linha 2"><br><br>
-    <input type="text" id="linha3" value="" placeholder="Linha 3 (opcional)"><br>
+    <div id="camposTexto">
+        <div class="section">Textos do Ingresso</div>
+        <input type="text" id="linha1" value="TORNEIO 1º DE MAIO" placeholder="Linha 1"><br><br>
+        <input type="text" id="linha2" value="2026" placeholder="Linha 2"><br><br>
+        <input type="text" id="linha3" value="" placeholder="Linha 3 (opcional)"><br>
+    </div>
+
+    <!-- Campos específicos da Rifa -->
+    <div id="camposRifa" style="display:none;">
+        <div class="section">Dados da Rifa</div>
+        <label>Nome do sorteio:</label>
+        <input type="text" id="rifaNome" value="RIFA BENEFICENTE" placeholder="Nome do sorteio"><br><br>
+        <label>Data do sorteio:</label>
+        <input type="text" id="rifaData" value="01/06/2026" placeholder="Data do sorteio"><br><br>
+        <label>Valor (R$):</label>
+        <input type="text" id="rifaValor" value="10,00" placeholder="Valor"><br><br>
+        <label>Prêmios (um por linha):</label><br>
+        <textarea id="rifaPremios" placeholder="Ex:&#10;1º - Smartphone&#10;2º - TV 32''&#10;3º - Cesta de chocolates">1º - Smartphone
+2º - TV 32"
+3º - Cesta de chocolates</textarea>
+        <hr>
+    </div>
 
     <div class="section">Marca d'água</div>
     <input type="text" id="wmTexto" value="SEC. ESPORTE ARAPONGAS/PR" placeholder="Texto da marca">
@@ -90,8 +111,10 @@
     });
 
     function alternarModo() {
-        document.getElementById('campoInicial').style.display = 
-            document.getElementById('modo').value === 'sorteio' ? 'inline' : 'none';
+        const modo = document.getElementById('modo').value;
+        document.getElementById('campoInicial').style.display = (modo === 'sorteio' || modo === 'rifa') ? 'inline' : 'none';
+        document.getElementById('camposTexto').style.display = (modo !== 'rifa') ? 'block' : 'none';
+        document.getElementById('camposRifa').style.display = (modo === 'rifa') ? 'block' : 'none';
     }
     alternarModo();
 
@@ -105,14 +128,11 @@
 
         try {
             const modo = document.getElementById('modo').value;
-            const l1 = document.getElementById('linha1').value.trim() || 'EVENTO';
-            const l2 = document.getElementById('linha2').value.trim();
-            const l3 = document.getElementById('linha3').value.trim();
             const wmTexto = document.getElementById('wmTexto').value.trim() || 'MARCA D\'AGUA';
             const opac = parseFloat(document.getElementById('wmOpac').value);
             const qtd = Math.min(2000, parseInt(document.getElementById('qtd').value) || 18);
             let startNum = 1;
-            if (modo === 'sorteio') startNum = Math.max(1, parseInt(document.getElementById('start').value) || 1);
+            if (modo === 'sorteio' || modo === 'rifa') startNum = Math.max(1, parseInt(document.getElementById('start').value) || 1);
 
             let logoImg = null;
             const file = document.getElementById('logoInput').files[0];
@@ -130,6 +150,18 @@
             const ml = (210 - totalW) / 2, mt = (297 - rows * h) / 2;
             const fontSizeT = 7, fontSizeN = 11, margB = 5;
 
+            // Dados específicos por modo
+            let l1, l2, l3;
+            if (modo === 'rifa') {
+                l1 = document.getElementById('rifaNome').value.trim() || 'RIFA';
+                l2 = `Data: ${document.getElementById('rifaData').value.trim() || 'A DEFINIR'}`;
+                l3 = `Valor: R$ ${document.getElementById('rifaValor').value.trim() || '0,00'}`;
+            } else {
+                l1 = document.getElementById('linha1').value.trim() || 'EVENTO';
+                l2 = document.getElementById('linha2').value.trim();
+                l3 = document.getElementById('linha3').value.trim();
+            }
+
             let count = 0, current = startNum, firstPage = true;
 
             while (count < qtd) {
@@ -139,22 +171,66 @@
                     for (let c = 0; c < cols && count < qtd; c++) {
                         const x = ml + c * (w + gap);
                         const y = mt + r * h;
-                        let num = '';
-                        if (modo === 'sorteio') {
-                            num = `N\u00BA ${String(current).padStart(4,'0')}`;
-                            current++;
-                        }
-                        // Marca d'água única (apenas uma linha paralela centralizada)
+                        const numStr = String(current).padStart(4,'0');
+                        const numeroFormatado = `N\u00BA ${numStr}`;
+                        current++;
+
+                        // Marca d'água única
                         desenharMarcaDaguaUnica(doc, wmTexto, x, y, w, h, opac);
 
-                        if (modo === 'sorteio') {
+                        if (modo === 'rifa') {
+                            // ===== RIFA =====
+                            // --- CANHOTO (esquerda): dados do comprador ---
                             doc.rect(x, y, lado, h);
-                            desenharConteudo(doc, x, y, lado, h, l1, l2, l3, num, logoImg, fontSizeT, fontSizeN, margB);
+                            doc.setFontSize(4.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+                            doc.text(`${numeroFormatado}`, x+2, y+3);
+                            doc.setFontSize(3.5); doc.setFont('helvetica', 'normal');
+                            doc.text('Nome: ___________________', x+2, y+7);
+                            doc.text('Tel: ____________________', x+2, y+10);
+                            doc.text('Pago: [  ] Sim  [  ] Não', x+2, y+13);
+                            doc.setFontSize(4); doc.setTextColor(80,80,80);
+                            doc.text(l1, x+lado/2, y+18, { align:'center' });
+                            doc.text(l2, x+lado/2, y+21, { align:'center' });
+                            doc.text(l3, x+lado/2, y+24, { align:'center' });
+
+                            // Linha de corte
+                            doc.setDrawColor(0); doc.setLineWidth(0.2);
                             doc.setLineDash([1.5,1.5]); doc.line(x+lado, y+2, x+lado, y+h-2); doc.setLineDash([]);
-                            doc.text('✂', x+lado-2, y+4, { align: 'center' });
+                            doc.setFontSize(4); doc.setTextColor(136);
+                            doc.text('✂', x+lado-2, y+4, { align:'center' });
+
+                            // --- PARTE PRINCIPAL (direita): prêmios ---
+                            const px = x + lado + 0.5;
+                            doc.rect(px, y, lado-0.5, h);
+                            doc.setFontSize(4); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+                            doc.text(`${numeroFormatado}`, px+2, y+3);
+                            doc.text(l1, px+(lado-0.5)/2, y+3, { align:'center' });
+                            // Prêmios
+                            const premiosTexto = document.getElementById('rifaPremios').value.trim();
+                            const linhasPremios = premiosTexto.split('\n').filter(l => l.trim() !== '');
+                            doc.setFontSize(3.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
+                            let premioY = y + 7;
+                            linhasPremios.forEach(linha => {
+                                if (premioY < y + h - 4) {
+                                    doc.text(linha.trim(), px+2, premioY);
+                                    premioY += 3.5;
+                                }
+                            });
+                            // Valor e data
+                            doc.setFontSize(3.8); doc.setFont('helvetica', 'bold');
+                            doc.text(l2, px+2, y+h-6);
+                            doc.text(l3, px+2, y+h-3);
+
+                        } else if (modo === 'sorteio') {
+                            // ===== SORTEIO (código original) =====
+                            doc.rect(x, y, lado, h);
+                            desenharConteudo(doc, x, y, lado, h, l1, l2, l3, numeroFormatado, logoImg, fontSizeT, fontSizeN, margB);
+                            doc.setLineDash([1.5,1.5]); doc.line(x+lado, y+2, x+lado, y+h-2); doc.setLineDash([]);
+                            doc.text('✂', x+lado-2, y+4, { align:'center' });
                             doc.rect(x+lado+0.5, y, lado-0.5, h);
-                            desenharConteudo(doc, x+lado+0.5, y, lado, h, l1, l2, l3, num, logoImg, fontSizeT, fontSizeN, margB);
+                            desenharConteudo(doc, x+lado+0.5, y, lado, h, l1, l2, l3, numeroFormatado, logoImg, fontSizeT, fontSizeN, margB);
                         } else {
+                            // ===== CONVITE =====
                             doc.rect(x, y, w, h);
                             desenharConteudo(doc, x, y, w, h, l1, l2, l3, '', logoImg, fontSizeT, fontSizeN, margB);
                         }
@@ -175,7 +251,6 @@
         }
     }
 
-    // Marca d'água única e centralizada (sem repetir)
     function desenharMarcaDaguaUnica(doc, texto, x, y, w, h, opac) {
         doc.saveGraphicsState();
         doc.setGState(new doc.GState({ opacity: opac }));
@@ -184,7 +259,7 @@
         doc.setFont('helvetica', 'bold');
         const cx = x + w/2;
         const cy = y + h/2;
-        doc.text(texto, cx, cy, { align: 'center', angle: 30, renderingMode: 'fill' });
+        doc.text(texto, cx, cy, { align:'center', angle:30, renderingMode:'fill' });
         doc.restoreGraphicsState();
     }
 
@@ -206,9 +281,9 @@
             txLargura = lw - 4;
         }
         doc.setFontSize(fsT); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
-        linhas.forEach((li, i) => doc.text(li, cx, textoY + i*(altLinha+1), { align: 'center', maxWidth: txLargura }));
+        linhas.forEach((li, i) => doc.text(li, cx, textoY + i*(altLinha+1), { align:'center', maxWidth: txLargura }));
         if (num) {
-            doc.setFontSize(fsN); doc.text(num, cx, numY, { align: 'center', maxWidth: txLargura });
+            doc.setFontSize(fsN); doc.text(num, cx, numY, { align:'center', maxWidth: txLargura });
         }
     }
 </script>
