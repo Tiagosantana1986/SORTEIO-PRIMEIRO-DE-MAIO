@@ -70,16 +70,16 @@
 
     <button id="gerar" onclick="gerarPDF()">📄 Gerar e Visualizar PDF</button>
     <div id="mensagem" class="msg" style="display:none"></div>
-    <div class="info-text">⚠ Lotes de até 2000. Marca d'água com múltiplas linhas.</div>
+    <div class="info-text">⚠ Lotes de até 2000. Marca d'água com linhas paralelas.</div>
 </div>
 
 <script>
     const { jsPDF } = window.jspdf;
-    // Slider de opacidade
+
     document.getElementById('wmOpac').addEventListener('input', function() {
         document.getElementById('wmVal').textContent = parseFloat(this.value).toFixed(2);
     });
-    // Preview da logo
+
     document.getElementById('logoInput').addEventListener('change', function(e) {
         const f = e.target.files[0];
         const p = document.getElementById('preview');
@@ -89,7 +89,7 @@
             r.readAsDataURL(f);
         } else p.style.display = 'none';
     });
-    // Alternar campo Nº Inicial
+
     function alternarModo() {
         document.getElementById('campoInicial').style.display = 
             document.getElementById('modo').value === 'sorteio' ? 'inline' : 'none';
@@ -115,7 +115,6 @@
             let startNum = 1;
             if (modo === 'sorteio') startNum = Math.max(1, parseInt(document.getElementById('start').value) || 1);
 
-            // Carregar logo
             let logoImg = null;
             const file = document.getElementById('logoInput').files[0];
             if (file) {
@@ -146,8 +145,8 @@
                             num = `N\u00BA ${String(current).padStart(4,'0')}`;
                             current++;
                         }
-                        // Marca d'água com 3 linhas sobrepostas
-                        desenharMarcaDaguaMulti(doc, wmTexto, x, y, w, h, opac);
+                        // Marca d'água com linhas PARALELAS (mesmo ângulo, deslocadas verticalmente)
+                        desenharMarcaDaguaParalela(doc, wmTexto, x, y, w, h, opac);
 
                         if (modo === 'sorteio') {
                             doc.rect(x, y, lado, h);
@@ -177,17 +176,18 @@
         }
     }
 
-    // Marca d'água com 3 rotações diferentes
-    function desenharMarcaDaguaMulti(doc, texto, x, y, w, h, opac) {
+    // Marca d'água com linhas PARALELAS (mesmo ângulo de 30°, posições verticais diferentes)
+    function desenharMarcaDaguaParalela(doc, texto, x, y, w, h, opac) {
         doc.saveGraphicsState();
         doc.setGState(new doc.GState({ opacity: opac }));
         doc.setTextColor(140,140,140);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
-        const cx = x + w/2, cy = y + h/2;
-        doc.text(texto, cx, cy-2, { align: 'center', angle: 30, renderingMode: 'fill' });
-        doc.text(texto, cx, cy,   { align: 'center', angle: -30, renderingMode: 'fill' });
-        doc.text(texto, cx, cy+2, { align: 'center', angle: 45, renderingMode: 'fill' });
+        const cx = x + w/2;
+        // Três linhas paralelas, deslocadas verticalmente em relação ao centro
+        doc.text(texto, cx, y + h/2 - 4, { align: 'center', angle: 30, renderingMode: 'fill' });
+        doc.text(texto, cx, y + h/2,     { align: 'center', angle: 30, renderingMode: 'fill' });
+        doc.text(texto, cx, y + h/2 + 4, { align: 'center', angle: 30, renderingMode: 'fill' });
         doc.restoreGraphicsState();
     }
 
