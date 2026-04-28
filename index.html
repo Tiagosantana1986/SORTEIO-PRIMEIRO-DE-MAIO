@@ -2,33 +2,40 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerador Universal de Ingressos</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        body { font-family: Arial; background: #f5f5f5; display: flex; justify-content: center; padding: 20px; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; display: flex; justify-content: center; padding: 20px; }
         .card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); max-width: 520px; width: 100%; text-align: center; }
         h1 { font-size: 22px; margin-bottom: 6px; }
-        .sub { color: #666; font-size: 14px; }
-        .section { margin: 16px 0 8px; font-weight: bold; }
-        .fields { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+        .sub { color: #666; font-size: 14px; margin: 4px 0; }
+        .section { margin: 16px 0 8px; font-weight: bold; font-size: 14px; }
+        .fields { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+        .field { text-align: left; }
         .field label { font-size: 13px; font-weight: bold; display: block; margin-bottom: 4px; }
         .field input, .field select { padding: 10px; font-size: 14px; border: 2px solid #ddd; border-radius: 8px; }
         .field input[type="text"] { width: 200px; }
         .field input[type="number"] { width: 100px; text-align: center; }
+        .file-upload { margin: 10px 0; }
+        #preview { max-width: 80px; margin-top: 8px; border: 1px solid #ccc; border-radius: 6px; display: none; }
         button { background: #0066cc; color: white; border: none; border-radius: 8px; padding: 14px 40px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 16px; }
         button:disabled { background: #999; }
         .msg { margin-top: 16px; padding: 10px; border-radius: 8px; font-size: 13px; }
         .msg.ok { background: #e8f5e9; color: #2e7d32; }
         .msg.erro { background: #ffebee; color: #c62828; }
+        .msg.info { background: #f5f5f5; color: #555; }
         .info-text { font-size: 12px; color: #888; margin-top: 20px; }
-        #preview { max-width: 80px; display: none; }
         .range-wrap { display: flex; align-items: center; gap: 5px; }
+        hr { margin: 16px 0; border: 0; border-top: 1px solid #eee; }
     </style>
 </head>
 <body>
 <div class="card">
-    <h1>🎫 Gerador de Ingressos</h1>
+    <div style="font-size: 40px;">🎫</div>
+    <h1>Gerador Universal de Ingressos</h1>
     <p class="sub">Secretaria Municipal de Esporte - Arapongas/PR</p>
+    <p class="sub">Sorteio de Brindes / Eventos</p>
 
     <div class="section">Modo</div>
     <select id="modo" onchange="alternarModo()">
@@ -38,12 +45,12 @@
 
     <div class="section">Logo (opcional)</div>
     <input type="file" id="logoInput" accept="image/*"><br>
-    <img id="preview">
+    <img id="preview" alt="Pré-visualização">
 
-    <div class="section">Textos</div>
+    <div class="section">Textos do Ingresso</div>
     <input type="text" id="linha1" value="TORNEIO 1º DE MAIO" placeholder="Linha 1"><br><br>
     <input type="text" id="linha2" value="2026" placeholder="Linha 2"><br><br>
-    <input type="text" id="linha3" value="" placeholder="Linha 3 (opcional)"><br><br>
+    <input type="text" id="linha3" value="" placeholder="Linha 3 (opcional)"><br>
 
     <div class="section">Marca d'água</div>
     <input type="text" id="wmTexto" value="SEC. ESPORTE ARAPONGAS/PR" placeholder="Texto da marca">
@@ -68,9 +75,11 @@
 
 <script>
     const { jsPDF } = window.jspdf;
+    // Slider de opacidade
     document.getElementById('wmOpac').addEventListener('input', function() {
         document.getElementById('wmVal').textContent = parseFloat(this.value).toFixed(2);
     });
+    // Preview da logo
     document.getElementById('logoInput').addEventListener('change', function(e) {
         const f = e.target.files[0];
         const p = document.getElementById('preview');
@@ -80,6 +89,7 @@
             r.readAsDataURL(f);
         } else p.style.display = 'none';
     });
+    // Alternar campo Nº Inicial
     function alternarModo() {
         document.getElementById('campoInicial').style.display = 
             document.getElementById('modo').value === 'sorteio' ? 'inline' : 'none';
@@ -105,6 +115,7 @@
             let startNum = 1;
             if (modo === 'sorteio') startNum = Math.max(1, parseInt(document.getElementById('start').value) || 1);
 
+            // Carregar logo
             let logoImg = null;
             const file = document.getElementById('logoInput').files[0];
             if (file) {
@@ -135,7 +146,7 @@
                             num = `N\u00BA ${String(current).padStart(4,'0')}`;
                             current++;
                         }
-                        // Marca d'água com múltiplas linhas
+                        // Marca d'água com 3 linhas sobrepostas
                         desenharMarcaDaguaMulti(doc, wmTexto, x, y, w, h, opac);
 
                         if (modo === 'sorteio') {
@@ -166,7 +177,7 @@
         }
     }
 
-    // Marca d'água com 3 linhas (sobrepostas em ângulos diferentes)
+    // Marca d'água com 3 rotações diferentes
     function desenharMarcaDaguaMulti(doc, texto, x, y, w, h, opac) {
         doc.saveGraphicsState();
         doc.setGState(new doc.GState({ opacity: opac }));
