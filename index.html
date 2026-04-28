@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Tickets e Convites</title>
+    <title>Gerador Universal de Ingressos</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -17,7 +17,7 @@
         .field label { font-size: 13px; font-weight: bold; color: #333; display: block; margin-bottom: 4px; }
         .field input, .field select { padding: 10px; font-size: 14px; border: 2px solid #ddd; border-radius: 8px; }
         .field input[type="text"] { width: 200px; }
-        .field input[type="number"] { width: 130px; text-align: center; }
+        .field input[type="number"] { width: 100px; text-align: center; }
         .field select { width: 220px; }
         .file-upload { margin: 10px 0; }
         .file-upload label { display: block; margin-bottom: 4px; font-weight: bold; }
@@ -30,16 +30,18 @@
         .msg.info { background: #f5f5f5; color: #555; }
         .info-text { font-size: 12px; color: #888; margin-top: 20px; }
         hr { margin: 16px 0; border: 0; border-top: 1px solid #eee; }
+        input[type=range] { width: 150px; vertical-align: middle; }
+        .range-wrap { display: flex; align-items: center; gap: 5px; }
     </style>
 </head>
 <body>
 <div class="card">
     <div style="font-size: 40px; margin-bottom: 12px;">🎫</div>
-    <h1>Gerador de Tickets e Convites</h1>
+    <h1>Gerador Universal de Ingressos</h1>
     <p class="sub">Secretaria Municipal de Esporte - Arapongas/PR</p>
-    <p class="sub-small">Sorteio de Brindes / Eventos</p>
+    <p class="sub-small">Sorteio / Shows / Eventos</p>
 
-    <!-- MODO DE USO -->
+    <!-- MODO -->
     <div class="section">Modo</div>
     <div class="fields">
         <div class="field">
@@ -60,7 +62,7 @@
         <img id="preview" alt="Pré-visualização da logo">
     </div>
 
-    <!-- TEXTOS DO EVENTO -->
+    <!-- TEXTOS -->
     <div class="section">Textos do Ingresso</div>
     <div class="fields">
         <div class="field">
@@ -83,23 +85,30 @@
     <div class="section">Marca d'água</div>
     <div class="fields">
         <div class="field">
-            <label>Texto da marca d'água</label>
-            <input type="text" id="marcaDagua" value="SEC. ESPORTE ARAPONGAS/PR" placeholder="Sua frase de segurança">
+            <label>Texto</label>
+            <input type="text" id="marcaDagua" value="SEC. ESPORTE ARAPONGAS/PR" placeholder="Frase de segurança">
+        </div>
+    </div>
+    <div class="fields">
+        <div class="field">
+            <label>Opacidade (0,10 a 0,50)</label>
+            <div class="range-wrap">
+                <input type="range" id="opacidadeMarca" min="0.10" max="0.50" step="0.05" value="0.30">
+                <span id="valOpacidade">0.30</span>
+            </div>
         </div>
     </div>
 
-    <!-- NUMERAÇÃO (SORTEIO) -->
-    <div id="secaoNumeracao">
-        <div class="section">Numeração (apenas Sorteio)</div>
-        <div class="fields">
-            <div class="field">
-                <label>Nº Inicial</label>
-                <input type="number" id="start" min="1" max="15000" value="1">
-            </div>
-            <div class="field">
-                <label>Nº Final</label>
-                <input type="number" id="end" min="1" max="15000" value="100">
-            </div>
+    <!-- QUANTIDADE -->
+    <div class="section">Quantidade</div>
+    <div class="fields">
+        <div class="field" id="campoInicial" style="display: none;">
+            <label>Nº Inicial</label>
+            <input type="number" id="start" min="1" max="15000" value="1">
+        </div>
+        <div class="field">
+            <label>Quantidade</label>
+            <input type="number" id="qtd" min="1" max="2000" value="18">
         </div>
     </div>
 
@@ -107,9 +116,8 @@
     <div id="mensagem" class="msg info" style="display: none;"></div>
 
     <div class="info-text">
-        ⚠️ Lotes de até 2000 ingressos (tempo limite).<br>
-        Layout automático: Sorteio (canhoto + principal) / Convite (inteiro).<br>
-        Marca d'água e logo personalizáveis.
+        ⚠️ Lote máximo de 2000 ingressos por clique (tempo limite).<br>
+        Marca d'água com opacidade ajustável. Logo e textos editáveis.
     </div>
 </div>
 
@@ -132,12 +140,19 @@
         }
     });
 
-    // Mostrar/ocultar numeração conforme modo
+    // Slider de opacidade
+    const sliderOpac = document.getElementById('opacidadeMarca');
+    const valOpac = document.getElementById('valOpacidade');
+    sliderOpac.addEventListener('input', () => {
+        valOpac.textContent = parseFloat(sliderOpac.value).toFixed(2);
+    });
+
+    // Mostrar/ocultar campo Nº Inicial conforme modo
     function alternarModo() {
         const modo = document.getElementById('modo').value;
-        document.getElementById('secaoNumeracao').style.display = (modo === 'sorteio') ? 'block' : 'none';
+        document.getElementById('campoInicial').style.display = (modo === 'sorteio') ? 'block' : 'none';
     }
-    alternarModo(); // inicial
+    alternarModo();
 
     async function gerarPDF() {
         const btn = document.getElementById('gerarBtn');
@@ -147,16 +162,18 @@
         msg.className = 'msg.info';
         msg.textContent = 'Gerando PDF...';
 
-        // Ler campos
         const modo = document.getElementById('modo').value;
         const e1 = document.getElementById('eventoLinha1').value.trim() || 'EVENTO';
         const e2 = document.getElementById('eventoLinha2').value.trim() || '';
         const e3 = document.getElementById('eventoLinha3').value.trim() || '';
         const watermark = document.getElementById('marcaDagua').value.trim() || 'MARCA D\'AGUA';
-        const start = parseInt(document.getElementById('start').value) || 1;
-        const end = parseInt(document.getElementById('end').value) || 100;
-        const maxPorLote = 2000;
-        const adjustedEnd = (modo === 'sorteio') ? Math.min(end, start + maxPorLote - 1) : start; // convite não usa range
+        const opacidade = parseFloat(document.getElementById('opacidadeMarca').value);
+        const qtd = Math.min(2000, Math.max(1, parseInt(document.getElementById('qtd').value) || 18));
+        
+        let startNum = 1;
+        if (modo === 'sorteio') {
+            startNum = Math.max(1, Math.min(15000, parseInt(document.getElementById('start').value) || 1));
+        }
 
         // Carregar logo
         let logoImg = null;
@@ -181,41 +198,42 @@
         const marginLeft = (210 - totalLargura) / 2;
         const marginTop = (297 - linhas * ticketHeight) / 2;
 
-        const opacidadeMarca = 0.25;
         const corMarca = [140, 140, 140];
         const fontSizeTexto = 7;
         const fontSizeNumero = 11;
         const margemInferior = 5;
 
-        let current = (modo === 'sorteio') ? start : 1;
+        let count = 0;
+        let currentNumber = startNum;
         let firstPage = true;
 
         try {
-            while ((modo === 'sorteio' && current <= adjustedEnd) || (modo === 'convite' && current <= 1)) {
+            while (count < qtd) {
                 if (!firstPage) doc.addPage();
                 firstPage = false;
 
-                for (let row = 0; row < linhas; row++) {
-                    for (let col = 0; col < colunas; col++) {
-                        if (modo === 'sorteio' && current > adjustedEnd) break;
-                        if (modo === 'convite' && current > 1) break;
-
+                for (let row = 0; row < linhas && count < qtd; row++) {
+                    for (let col = 0; col < colunas && count < qtd; col++) {
                         const x = marginLeft + col * (ticketWidth + espacoColunas);
                         const y = marginTop + row * ticketHeight;
-                        const numStr = (modo === 'sorteio') ? String(current).padStart(4, '0') : '';
-                        const numeroFormatado = (modo === 'sorteio') ? `N\u00BA ${numStr}` : '';
 
-                        // Marca d'água
-                        adicionarMarcaDagua(doc, watermark, x, y, ticketWidth, ticketHeight, opacidadeMarca, corMarca);
+                        let numeroStr = '';
+                        if (modo === 'sorteio') {
+                            numeroStr = `N\u00BA ${String(currentNumber).padStart(4, '0')}`;
+                            currentNumber++;
+                        }
+
+                        // Marca d'água com opacidade personalizada
+                        adicionarMarcaDagua(doc, watermark, x, y, ticketWidth, ticketHeight, opacidade, corMarca);
 
                         if (modo === 'sorteio') {
                             // ---- SORTEIO: CANHOTO + PRINCIPAL ----
                             // Canhoto
                             doc.setDrawColor(204); doc.setLineWidth(0.1);
                             doc.rect(x, y, lado, ticketHeight);
-                            desenharConteudo(doc, x, y, lado, ticketHeight, e1, e2, e3, numeroFormatado, logoImg, fontSizeTexto, fontSizeNumero, margemInferior, 'sorteio');
+                            desenharConteudo(doc, x, y, lado, ticketHeight, e1, e2, e3, numeroStr, logoImg, fontSizeTexto, fontSizeNumero, margemInferior);
 
-                            // Linha de corte
+                            // Linha de corte vertical
                             const dashX = x + lado;
                             doc.setDrawColor(0); doc.setLineWidth(0.2);
                             doc.setLineDash([1.5, 1.5]); doc.line(dashX, y + 2, dashX, y + ticketHeight - 2);
@@ -223,16 +241,16 @@
                             doc.setFontSize(4); doc.setTextColor(136);
                             doc.text('✂', dashX - 2, y + 4, { align: 'center' });
 
-                            // Principal
+                            // Parte principal
                             const px = x + lado + 0.5;
                             doc.setDrawColor(204); doc.setLineWidth(0.1);
                             doc.rect(px, y, lado - 0.5, ticketHeight);
-                            desenharConteudo(doc, px, y, lado, ticketHeight, e1, e2, e3, numeroFormatado, logoImg, fontSizeTexto, fontSizeNumero, margemInferior, 'sorteio');
+                            desenharConteudo(doc, px, y, lado, ticketHeight, e1, e2, e3, numeroStr, logoImg, fontSizeTexto, fontSizeNumero, margemInferior);
                         } else {
-                            // ---- CONVITE: INTEIRO, SEM CANHOTO ----
+                            // ---- CONVITE: INTEIRO ----
                             doc.setDrawColor(204); doc.setLineWidth(0.1);
                             doc.rect(x, y, ticketWidth, ticketHeight);
-                            desenharConteudo(doc, x, y, ticketWidth, ticketHeight, e1, e2, e3, '', logoImg, fontSizeTexto, fontSizeNumero, margemInferior, 'convite');
+                            desenharConteudo(doc, x, y, ticketWidth, ticketHeight, e1, e2, e3, '', logoImg, fontSizeTexto, fontSizeNumero, margemInferior);
                         }
 
                         // Linha horizontal entre ingressos
@@ -243,20 +261,17 @@
                             doc.setLineDash([]);
                         }
 
-                        if (modo === 'sorteio') current++;
-                        else current++; // sai do loop
+                        count++;
                     }
                 }
-                if (modo === 'convite') break; // apenas uma página de convites
             }
 
             const blobUrl = doc.output('bloburl');
             window.open(blobUrl, '_blank');
 
-            const total = (modo === 'sorteio') ? (adjustedEnd - start + 1) : 18;
-            const paginas = Math.ceil(total / 18);
+            const paginas = Math.ceil(count / (linhas * colunas));
             msg.className = 'msg.ok';
-            msg.textContent = `✅ PDF gerado! ${total} ingresso(s) em ${paginas} página(s). Aberto para visualização.`;
+            msg.textContent = `✅ PDF gerado! ${count} ingresso(s) em ${paginas} página(s). Aberto para visualização.`;
         } catch (erro) {
             msg.className = 'msg.erro';
             msg.textContent = '❌ Erro: ' + erro.message;
@@ -265,10 +280,28 @@
         }
     }
 
-    function desenharConteudo(doc, x, y, larguraTotal, altura, linha1, linha2, linha3, numero, logoImg, fontSizeTexto, fontSizeNumero, margemInf, tipo) {
+    function desenharConteudo(doc, x, y, larguraTotal, altura, linha1, linha2, linha3, numero, logoImg, fontSizeTexto, fontSizeNumero, margemInf) {
         const numeroY = y + altura - margemInf;
-        const temNumero = (tipo === 'sorteio' && numero !== '');
+        const temNumero = (numero !== '');
 
+        // Coletar linhas de texto existentes
+        let linhasTexto = [linha1];
+        if (linha2) linhasTexto.push(linha2);
+        if (linha3) linhasTexto.push(linha3);
+        const numLinhas = linhasTexto.length;
+        const alturaLinha = fontSizeTexto * 1.2;
+        const alturaBlocoTexto = alturaLinha * numLinhas + (numLinhas - 1) * 1;
+
+        let espacoDisponivel;
+        if (temNumero) {
+            espacoDisponivel = numeroY - y - fontSizeNumero * 0.5;
+        } else {
+            espacoDisponivel = numeroY - y + fontSizeNumero; // mais espaço
+        }
+
+        const textoY = y + (espacoDisponivel - alturaBlocoTexto) / 2 + alturaLinha;
+
+        // Desenhar logo (se houver)
         if (logoImg) {
             const logoSize = 12;
             const logoX = x + 2;
@@ -278,22 +311,6 @@
             const textoX = logoX + logoSize + 2;
             const textoLargura = larguraTotal - logoSize - 6;
             const textoCentro = textoX + textoLargura / 2;
-
-            const alturaLinha = fontSizeTexto * 1.2;
-            let linhasTexto = [linha1];
-            if (linha2) linhasTexto.push(linha2);
-            if (linha3) linhasTexto.push(linha3);
-            const numLinhas = linhasTexto.length;
-            const alturaBlocoTexto = alturaLinha * numLinhas + (numLinhas - 1) * 1;
-
-            let espacoDisponivel;
-            if (temNumero) {
-                espacoDisponivel = numeroY - y - fontSizeNumero * 0.5;
-            } else {
-                espacoDisponivel = numeroY - y + fontSizeNumero; // usa mais espaço
-            }
-
-            const textoY = y + (espacoDisponivel - alturaBlocoTexto) / 2 + alturaLinha;
 
             doc.setFontSize(fontSizeTexto);
             doc.setFont('helvetica', 'bold');
@@ -309,22 +326,6 @@
             }
         } else {
             const centroX = x + larguraTotal / 2;
-            const alturaLinha = fontSizeTexto * 1.2;
-            let linhasTexto = [linha1];
-            if (linha2) linhasTexto.push(linha2);
-            if (linha3) linhasTexto.push(linha3);
-            const numLinhas = linhasTexto.length;
-            const alturaBlocoTexto = alturaLinha * numLinhas + (numLinhas - 1) * 1;
-
-            let espacoDisponivel;
-            if (temNumero) {
-                espacoDisponivel = numeroY - y - fontSizeNumero * 0.5;
-            } else {
-                espacoDisponivel = numeroY - y + fontSizeNumero;
-            }
-
-            const textoY = y + (espacoDisponivel - alturaBlocoTexto) / 2 + alturaLinha;
-
             doc.setFontSize(fontSizeTexto);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(0);
@@ -340,7 +341,7 @@
         }
     }
 
-    function adicionarMarcaDagua(doc, texto, x, y, largura, altura, opacidade = 0.15, corRGB = [180, 180, 180]) {
+    function adicionarMarcaDagua(doc, texto, x, y, largura, altura, opacidade, corRGB) {
         doc.saveGraphicsState();
         doc.setGState(new doc.GState({ opacity: opacidade }));
         doc.setTextColor(corRGB[0], corRGB[1], corRGB[2]);
