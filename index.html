@@ -56,7 +56,6 @@
         <input type="text" id="linha3" value="" placeholder="Linha 3 (opcional)"><br>
     </div>
 
-    <!-- Campos específicos da Rifa -->
     <div id="camposRifa" style="display:none;">
         <div class="section">Dados da Rifa</div>
         <label>Nome do sorteio:</label>
@@ -150,7 +149,6 @@
             const ml = (210 - totalW) / 2, mt = (297 - rows * h) / 2;
             const fontSizeT = 7, fontSizeN = 11, margB = 5;
 
-            // Dados específicos por modo
             let l1, l2, l3;
             if (modo === 'rifa') {
                 l1 = document.getElementById('rifaNome').value.trim() || 'RIFA';
@@ -179,50 +177,21 @@
                         desenharMarcaDaguaUnica(doc, wmTexto, x, y, w, h, opac);
 
                         if (modo === 'rifa') {
-                            // ===== RIFA =====
-                            // --- CANHOTO (esquerda): dados do comprador ---
+                            // ===== RIFA COM LOGO =====
+                            // --- CANHOTO ---
                             doc.rect(x, y, lado, h);
-                            doc.setFontSize(4.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
-                            doc.text(`${numeroFormatado}`, x+2, y+3);
-                            doc.setFontSize(3.5); doc.setFont('helvetica', 'normal');
-                            doc.text('Nome: ___________________', x+2, y+7);
-                            doc.text('Tel: ____________________', x+2, y+10);
-                            doc.text('Pago: [  ] Sim  [  ] Não', x+2, y+13);
-                            doc.setFontSize(4); doc.setTextColor(80,80,80);
-                            doc.text(l1, x+lado/2, y+18, { align:'center' });
-                            doc.text(l2, x+lado/2, y+21, { align:'center' });
-                            doc.text(l3, x+lado/2, y+24, { align:'center' });
-
+                            desenharRifaCanhoto(doc, x, y, lado, h, numeroFormatado, l1, l2, l3, logoImg);
                             // Linha de corte
                             doc.setDrawColor(0); doc.setLineWidth(0.2);
                             doc.setLineDash([1.5,1.5]); doc.line(x+lado, y+2, x+lado, y+h-2); doc.setLineDash([]);
                             doc.setFontSize(4); doc.setTextColor(136);
                             doc.text('✂', x+lado-2, y+4, { align:'center' });
-
-                            // --- PARTE PRINCIPAL (direita): prêmios ---
+                            // --- PARTE PRINCIPAL ---
                             const px = x + lado + 0.5;
                             doc.rect(px, y, lado-0.5, h);
-                            doc.setFontSize(4); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
-                            doc.text(`${numeroFormatado}`, px+2, y+3);
-                            doc.text(l1, px+(lado-0.5)/2, y+3, { align:'center' });
-                            // Prêmios
-                            const premiosTexto = document.getElementById('rifaPremios').value.trim();
-                            const linhasPremios = premiosTexto.split('\n').filter(l => l.trim() !== '');
-                            doc.setFontSize(3.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
-                            let premioY = y + 7;
-                            linhasPremios.forEach(linha => {
-                                if (premioY < y + h - 4) {
-                                    doc.text(linha.trim(), px+2, premioY);
-                                    premioY += 3.5;
-                                }
-                            });
-                            // Valor e data
-                            doc.setFontSize(3.8); doc.setFont('helvetica', 'bold');
-                            doc.text(l2, px+2, y+h-6);
-                            doc.text(l3, px+2, y+h-3);
+                            desenharRifaPrincipal(doc, px, y, lado-0.5, h, numeroFormatado, l1, l2, l3, logoImg);
 
                         } else if (modo === 'sorteio') {
-                            // ===== SORTEIO (código original) =====
                             doc.rect(x, y, lado, h);
                             desenharConteudo(doc, x, y, lado, h, l1, l2, l3, numeroFormatado, logoImg, fontSizeT, fontSizeN, margB);
                             doc.setLineDash([1.5,1.5]); doc.line(x+lado, y+2, x+lado, y+h-2); doc.setLineDash([]);
@@ -230,7 +199,6 @@
                             doc.rect(x+lado+0.5, y, lado-0.5, h);
                             desenharConteudo(doc, x+lado+0.5, y, lado, h, l1, l2, l3, numeroFormatado, logoImg, fontSizeT, fontSizeN, margB);
                         } else {
-                            // ===== CONVITE =====
                             doc.rect(x, y, w, h);
                             desenharConteudo(doc, x, y, w, h, l1, l2, l3, '', logoImg, fontSizeT, fontSizeN, margB);
                         }
@@ -249,6 +217,61 @@
         } finally {
             btn.disabled = false;
         }
+    }
+
+    // NOVA: Canhoto da rifa com logo (se existir)
+    function desenharRifaCanhoto(doc, x, y, w, h, numero, nomeRifa, dataRifa, valorRifa, logo) {
+        let offsetX = 2; // margem esquerda
+        // Se houver logo, desenha à esquerda e ajusta offset
+        if (logo) {
+            const logoSize = 10;
+            const logoY = y + (h - logoSize) / 2;
+            doc.addImage(logo, 'PNG', x + 2, logoY, logoSize, logoSize);
+            offsetX = 2 + logoSize + 2; // espaço após a logo
+        }
+        // Número
+        doc.setFontSize(4.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+        doc.text(numero, x + offsetX, y + 3);
+        // Campos para comprador
+        doc.setFontSize(3.5); doc.setFont('helvetica', 'normal');
+        doc.text('Nome: ___________________', x + offsetX, y + 7);
+        doc.text('Tel: ____________________', x + offsetX, y + 10);
+        doc.text('Pago: [  ] Sim  [  ] Não', x + offsetX, y + 13);
+        // Informações da rifa na parte inferior
+        doc.setFontSize(4); doc.setTextColor(80,80,80);
+        doc.text(nomeRifa, x + w/2, y + 18, { align:'center' });
+        doc.text(dataRifa, x + w/2, y + 21, { align:'center' });
+        doc.text(valorRifa, x + w/2, y + 24, { align:'center' });
+    }
+
+    // NOVA: Parte principal da rifa com logo e prêmios
+    function desenharRifaPrincipal(doc, x, y, w, h, numero, nomeRifa, dataRifa, valorRifa, logo) {
+        let offsetX = 2;
+        const logoSize = 10;
+        if (logo) {
+            const logoY = y + (h - logoSize) / 2;
+            doc.addImage(logo, 'PNG', x + 2, logoY, logoSize, logoSize);
+            offsetX = 2 + logoSize + 2;
+        }
+        // Número e nome da rifa
+        doc.setFontSize(4); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+        doc.text(`${numero}`, x + offsetX, y + 3);
+        doc.text(nomeRifa, x + w/2, y + 3, { align:'center' });
+        // Prêmios (lista)
+        const premiosTexto = document.getElementById('rifaPremios').value.trim();
+        const linhasPremios = premiosTexto.split('\n').filter(l => l.trim() !== '');
+        doc.setFontSize(3.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
+        let premioY = y + 7;
+        linhasPremios.forEach(linha => {
+            if (premioY < y + h - 7) {
+                doc.text(linha.trim(), x + offsetX, premioY);
+                premioY += 3.5;
+            }
+        });
+        // Data e valor
+        doc.setFontSize(3.8); doc.setFont('helvetica', 'bold');
+        doc.text(dataRifa, x + offsetX, y + h - 6);
+        doc.text(valorRifa, x + offsetX, y + h - 3);
     }
 
     function desenharMarcaDaguaUnica(doc, texto, x, y, w, h, opac) {
