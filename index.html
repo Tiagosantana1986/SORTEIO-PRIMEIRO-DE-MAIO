@@ -27,7 +27,6 @@
         .msg.info { background: #f5f5f5; color: #555; }
         .info-text { font-size: 12px; color: #888; margin-top: 20px; }
         .range-wrap { display: flex; align-items: center; gap: 5px; }
-        hr { margin: 16px 0; border: 0; border-top: 1px solid #eee; }
     </style>
 </head>
 <body>
@@ -70,7 +69,7 @@
 
     <button id="gerar" onclick="gerarPDF()">📄 Gerar e Visualizar PDF</button>
     <div id="mensagem" class="msg" style="display:none"></div>
-    <div class="info-text">⚠ Lotes de até 2000. Marca d'água com linhas paralelas.</div>
+    <div class="info-text">⚠ Lotes de até 2000. Marca d'água única e paralela.</div>
 </div>
 
 <script>
@@ -145,8 +144,8 @@
                             num = `N\u00BA ${String(current).padStart(4,'0')}`;
                             current++;
                         }
-                        // Marca d'água com linhas PARALELAS (mesmo ângulo, deslocadas verticalmente)
-                        desenharMarcaDaguaParalela(doc, wmTexto, x, y, w, h, opac);
+                        // Marca d'água única (apenas uma linha paralela centralizada)
+                        desenharMarcaDaguaUnica(doc, wmTexto, x, y, w, h, opac);
 
                         if (modo === 'sorteio') {
                             doc.rect(x, y, lado, h);
@@ -176,18 +175,16 @@
         }
     }
 
-    // Marca d'água com linhas PARALELAS (mesmo ângulo de 30°, posições verticais diferentes)
-    function desenharMarcaDaguaParalela(doc, texto, x, y, w, h, opac) {
+    // Marca d'água única e centralizada (sem repetir)
+    function desenharMarcaDaguaUnica(doc, texto, x, y, w, h, opac) {
         doc.saveGraphicsState();
         doc.setGState(new doc.GState({ opacity: opac }));
         doc.setTextColor(140,140,140);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
         const cx = x + w/2;
-        // Três linhas paralelas, deslocadas verticalmente em relação ao centro
-        doc.text(texto, cx, y + h/2 - 4, { align: 'center', angle: 30, renderingMode: 'fill' });
-        doc.text(texto, cx, y + h/2,     { align: 'center', angle: 30, renderingMode: 'fill' });
-        doc.text(texto, cx, y + h/2 + 4, { align: 'center', angle: 30, renderingMode: 'fill' });
+        const cy = y + h/2;
+        doc.text(texto, cx, cy, { align: 'center', angle: 30, renderingMode: 'fill' });
         doc.restoreGraphicsState();
     }
 
